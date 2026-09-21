@@ -1,0 +1,1741 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Bits &amp; Boolean Lab — ASCII bit toggler + De Morgan visualizer
+    </title>
+    <style>
+      :root {
+        --artifact-background: #ffffff;
+        --artifact-background-light: #f1f3f6;
+        --artifact-background-mid: #e9ecf1;
+        --artifact-border-light: #e3e6ec;
+        --artifact-border-dark: #cdd2db;
+        --artifact-primary-brand: #3559e6;
+        --artifact-primary-highlight: #0d0f14;
+        --artifact-primary-hover: #2442b8;
+        --artifact-selected: #eaeefc;
+        --artifact-text-primary: #11141a;
+        --artifact-text-secondary: #5c6470;
+        --artifact-text-highlight: #e8eefc;
+        --artifact-positive-background: #e8f6ee;
+        --artifact-positive-text: #11141a;
+        --artifact-positive: #159a6a;
+        --artifact-negative: #dc4c4c;
+        --artifact-on-brand-text: #ffffff;
+        --artifact-zero-text: #8b929d;
+        --artifact-venn-fill: #b9c8f7;
+        --artifact-venn-universe: #f7f8fb;
+        --artifact-venn-stroke: #8d95a3;
+      }
+      html[data-theme="dark"] {
+        --artifact-background: #0a0b0e;
+        --artifact-background-light: #121419;
+        --artifact-background-mid: #181b22;
+        --artifact-border-light: #23262e;
+        --artifact-border-dark: #343844;
+        --artifact-primary-brand: #6a92ff;
+        --artifact-primary-highlight: #f5f7fb;
+        --artifact-primary-hover: #88a8ff;
+        --artifact-selected: #1a2030;
+        --artifact-text-primary: #eef0f4;
+        --artifact-text-secondary: #9aa0ad;
+        --artifact-text-highlight: #14213d;
+        --artifact-positive-background: #0e2a1d;
+        --artifact-positive-text: #c8f5da;
+        --artifact-positive: #46d39a;
+        --artifact-negative: #ff6b6b;
+        --artifact-on-brand-text: #0a0b0e;
+        --artifact-zero-text: #6d7480;
+        --artifact-venn-fill: #2b3a6b;
+        --artifact-venn-universe: #0f1116;
+        --artifact-venn-stroke: #6d7480;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--artifact-background);
+        color: var(--artifact-text-primary);
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        letter-spacing: -0.005em;
+      }
+      .shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 64px 28px 96px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-weight: 400;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin: 0;
+        color: var(--artifact-text-primary);
+      }
+      h1 {
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        font-weight: 300;
+      }
+      h2 {
+        font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+      }
+      h3 {
+        font-size: 1.125rem;
+        font-weight: 500;
+      }
+      p {
+        color: var(--artifact-text-secondary);
+      }
+      .eyebrow,
+      .field-label,
+      th {
+        font-family:
+          "SF Mono", "IBM Plex Mono", "Cascadia Code", "Consolas", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+      }
+      .mono,
+      code {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 13px;
+      }
+      .lede {
+        max-width: 58ch;
+        font-size: 1.0625rem;
+        margin: 20px 0 0;
+      }
+
+      /* ---------- reveal ---------- */
+      .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      section {
+        margin-top: 84px;
+      }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--artifact-border-light);
+        padding-bottom: 18px;
+      }
+      .sec-head p {
+        margin: 6px 0 0;
+        max-width: 62ch;
+      }
+
+      /* ---------- controls ---------- */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin: 28px 0 8px;
+      }
+      input[type="text"] {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 16px;
+        padding: 11px 14px;
+        min-width: 260px;
+        flex: 1 1 260px;
+        background: var(--artifact-background-light);
+        color: var(--artifact-text-primary);
+        border: 1px solid var(--artifact-border-dark);
+        border-radius: 6px;
+        outline: none;
+      }
+      input[type="text"]:focus {
+        border-color: var(--artifact-primary-brand);
+        background: var(--artifact-background);
+      }
+      .btn {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 11px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        background: var(--artifact-background-light);
+        color: var(--artifact-text-primary);
+        border: 1px solid var(--artifact-border-dark);
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .btn:hover {
+        background: var(--artifact-selected);
+        border-color: var(--artifact-primary-brand);
+        color: var(--artifact-text-primary);
+      }
+      .btn.solid {
+        background: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--artifact-primary-brand);
+      }
+      .btn.solid:hover {
+        background: var(--artifact-primary-hover);
+        color: var(--artifact-on-brand-text);
+      }
+
+      /* ---------- byte cards ---------- */
+      .bytes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 26px;
+      }
+      .byte-card {
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 8px;
+        padding: 16px 16px 13px;
+        flex: 0 0 auto;
+      }
+      .byte-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .glyph {
+        width: 46px;
+        height: 46px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        background: var(--artifact-background);
+        border: 1px solid var(--artifact-border-dark);
+        font-size: 24px;
+        font-weight: 400;
+        color: var(--artifact-text-primary);
+      }
+      .glyph.special {
+        font-family: "SF Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        color: var(--artifact-text-secondary);
+      }
+      .byte-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .byte-meta .m1 {
+        font-family: "SF Mono", monospace;
+        font-size: 13px;
+        color: var(--artifact-text-primary);
+      }
+      .byte-meta .m2 {
+        font-family: "SF Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+      }
+      .bit-row {
+        display: flex;
+        gap: 5px;
+      }
+      .bit-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+      .bit {
+        width: 34px;
+        height: 42px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: "SF Mono", "IBM Plex Mono", monospace;
+        font-size: 17px;
+        font-weight: 500;
+        background: var(--artifact-background);
+        color: var(--artifact-zero-text);
+        border: 1px solid var(--artifact-border-dark);
+        transition:
+          background 0.12s,
+          color 0.12s,
+          border-color 0.12s,
+          transform 0.12s;
+      }
+      .bit:hover {
+        border-color: var(--artifact-primary-brand);
+        transform: translateY(-2px);
+      }
+      .bit[aria-pressed="true"] {
+        background: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--artifact-primary-brand);
+      }
+      .bit:focus-visible {
+        outline: 2px solid var(--artifact-primary-brand);
+        outline-offset: 2px;
+      }
+      .place {
+        font-family: "SF Mono", monospace;
+        font-size: 10px;
+        color: var(--artifact-text-secondary);
+      }
+      .place b {
+        font-weight: 500;
+        color: var(--artifact-text-primary);
+      }
+
+      .stream {
+        margin-top: 26px;
+        padding: 18px 20px;
+        border-radius: 8px;
+        background: var(--artifact-background-mid);
+        border: 1px solid var(--artifact-border-light);
+        display: grid;
+        gap: 12px;
+      }
+      .stream .row {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+      .stream .val {
+        font-family: "SF Mono", monospace;
+        font-size: 13px;
+        word-break: break-all;
+        color: var(--artifact-text-primary);
+      }
+      .hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13.5px;
+        color: var(--artifact-text-secondary);
+        margin-top: 18px;
+      }
+      .hint .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--artifact-primary-brand);
+        flex: 0 0 auto;
+      }
+
+      /* ---------- boolean ---------- */
+      .switches {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 28px;
+      }
+      .sw {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        cursor: pointer;
+        padding: 14px 20px 14px 16px;
+        border-radius: 8px;
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .sw:hover {
+        border-color: var(--artifact-primary-brand);
+      }
+      .sw .name {
+        font-size: 22px;
+        font-weight: 400;
+        width: 16px;
+        color: var(--artifact-text-primary);
+      }
+      .sw .track {
+        width: 52px;
+        height: 28px;
+        border-radius: 14px;
+        background: var(--artifact-background-mid);
+        border: 1px solid var(--artifact-border-dark);
+        position: relative;
+        transition:
+          background 0.18s,
+          border-color 0.18s;
+      }
+      .sw .knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--artifact-text-secondary);
+        transition:
+          transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1),
+          background 0.18s;
+      }
+      .sw[aria-pressed="true"] .track {
+        background: var(--artifact-primary-brand);
+        border-color: var(--artifact-primary-brand);
+      }
+      .sw[aria-pressed="true"] .knob {
+        transform: translateX(24px);
+        background: var(--artifact-on-brand-text);
+      }
+      .sw .state {
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+        width: 56px;
+      }
+      .sw[aria-pressed="true"] .state {
+        color: var(--artifact-primary-brand);
+      }
+
+      .laws {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 20px;
+        margin-top: 26px;
+      }
+      .law {
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 8px;
+        padding: 22px 22px 18px;
+      }
+      .law-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 4px;
+      }
+      .badge {
+        font-family: "SF Mono", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: 4px;
+        background: var(--artifact-positive-background);
+        color: var(--artifact-positive-text);
+        border: 1px solid var(--artifact-positive);
+      }
+      .equation {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 16px 0 6px;
+      }
+      .side {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .expr {
+        font-size: 19px;
+        letter-spacing: -0.01em;
+        color: var(--artifact-text-primary);
+      }
+      .val-pill {
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        padding: 4px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--artifact-border-dark);
+        background: var(--artifact-background);
+        color: var(--artifact-zero-text);
+      }
+      .val-pill.on {
+        background: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--artifact-primary-brand);
+      }
+      .eq-sign {
+        font-size: 20px;
+        color: var(--artifact-text-secondary);
+      }
+      .circuit {
+        margin-top: 10px;
+      }
+      .circuit svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .wire {
+        stroke: var(--artifact-border-dark);
+        stroke-width: 2;
+        fill: none;
+      }
+      .wire.hot {
+        stroke: var(--artifact-primary-brand);
+        stroke-width: 2.5;
+      }
+      .node {
+        fill: var(--artifact-border-dark);
+      }
+      .node.hot {
+        fill: var(--artifact-primary-brand);
+      }
+      .gate {
+        fill: var(--artifact-background);
+        stroke: var(--artifact-border-dark);
+        stroke-width: 1.5;
+      }
+      .gate-label {
+        fill: var(--artifact-text-primary);
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+      .pin-label {
+        fill: var(--artifact-text-secondary);
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+      }
+      .pin-label.hot {
+        fill: var(--artifact-primary-brand);
+      }
+      .circuit-cap {
+        font-family: "SF Mono", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+        margin: 14px 0 2px;
+      }
+
+      /* ---------- venn ---------- */
+      .venn-note {
+        margin: 8px 0 0;
+      }
+      .venn-law {
+        margin-top: 30px;
+      }
+      .venn-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .venn-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .venn-panel {
+        width: 124px;
+      }
+      .venn-panel.result .frame {
+        border-color: var(--artifact-primary-brand);
+      }
+      .venn-panel .frame {
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 6px;
+        background: var(--artifact-background-light);
+        padding: 4px;
+      }
+      .venn-panel svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .venn-cap {
+        font-family: "SF Mono", monospace;
+        font-size: 11.5px;
+        text-align: center;
+        color: var(--artifact-text-secondary);
+        margin-top: 7px;
+      }
+      .venn-panel.result .venn-cap {
+        color: var(--artifact-text-primary);
+      }
+      .venn-op {
+        align-self: center;
+        padding: 0 4px 18px;
+        font-size: 15px;
+        color: var(--artifact-text-secondary);
+      }
+      .v-universe {
+        fill: var(--artifact-venn-universe);
+        stroke: var(--artifact-border-dark);
+        stroke-width: 1;
+      }
+      .v-fill {
+        fill: var(--artifact-venn-fill);
+      }
+      .v-outline {
+        fill: none;
+        stroke: var(--artifact-venn-stroke);
+        stroke-width: 1.2;
+      }
+      .v-label {
+        fill: var(--artifact-text-secondary);
+        font-family: "SF Mono", monospace;
+        font-size: 11px;
+      }
+      .v-dot {
+        stroke: var(--artifact-background-light);
+        stroke-width: 1.5;
+      }
+      .v-dot.in {
+        fill: var(--artifact-primary-brand);
+      }
+      .v-dot.out {
+        fill: var(--artifact-text-secondary);
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 26px;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: center;
+        padding: 11px 8px;
+        border-bottom: 1px solid var(--artifact-border-light);
+      }
+      th {
+        white-space: nowrap;
+      }
+      td {
+        font-family: "SF Mono", monospace;
+        font-size: 13.5px;
+        color: var(--artifact-text-primary);
+      }
+      td.zero {
+        color: var(--artifact-zero-text);
+      }
+      tr.active td {
+        background: var(--artifact-text-highlight);
+      }
+      tr.active td:first-child {
+        position: relative;
+      }
+      .pair-a {
+        box-shadow: inset 2px 0 0 var(--artifact-primary-brand);
+      }
+      .pair-b {
+        box-shadow: inset -2px 0 0 var(--artifact-primary-brand);
+      }
+      .tbl-wrap {
+        overflow-x: auto;
+      }
+
+      .bitproof {
+        margin-top: 26px;
+        display: grid;
+        gap: 22px;
+      }
+      .byte-editor {
+        display: grid;
+        gap: 10px;
+      }
+      .proof-grid {
+        display: grid;
+        gap: 6px;
+      }
+      .proof-row {
+        display: grid;
+        grid-template-columns: 116px auto;
+        gap: 16px;
+        align-items: center;
+      }
+      .proof-row .lbl {
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        color: var(--artifact-text-secondary);
+        text-align: right;
+      }
+      .cells {
+        display: flex;
+        gap: 5px;
+      }
+      .cell {
+        width: 34px;
+        height: 30px;
+        border-radius: 5px;
+        display: grid;
+        place-items: center;
+        font-family: "SF Mono", monospace;
+        font-size: 14px;
+        background: var(--artifact-background);
+        border: 1px solid var(--artifact-border-light);
+        color: var(--artifact-zero-text);
+      }
+      .cell.on {
+        background: var(--artifact-primary-brand);
+        border-color: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+      }
+      .proof-row.result .lbl {
+        color: var(--artifact-text-primary);
+      }
+      .proof-row.result .cell {
+        border-color: var(--artifact-border-dark);
+      }
+      .divider {
+        height: 1px;
+        background: var(--artifact-border-light);
+        margin: 4px 0;
+      }
+      .match-note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 4px;
+        font-size: 13.5px;
+        color: var(--artifact-text-secondary);
+      }
+      .back {
+        display: inline-block;
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+        text-decoration: none;
+        margin-bottom: 26px;
+      }
+      .back:hover {
+        color: var(--artifact-primary-brand);
+      }
+      .footer {
+        margin-top: 84px;
+        padding-top: 22px;
+        border-top: 1px solid var(--artifact-border-light);
+        font-size: 13.5px;
+        color: var(--artifact-text-secondary);
+      }
+
+      @media (max-width: 620px) {
+        .shell {
+          padding: 40px 18px 72px;
+        }
+        .bit {
+          width: 30px;
+          height: 38px;
+          font-size: 15px;
+        }
+        .cell {
+          width: 30px;
+        }
+        .proof-row {
+          grid-template-columns: 92px auto;
+          gap: 10px;
+        }
+      }
+
+      @media print {
+        @page {
+          size: auto !important;
+        }
+        body {
+          margin: 0;
+          padding: 0.4in 0.6in;
+          background: #fff;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .shell {
+          max-width: 100% !important;
+          width: 100% !important;
+          padding: 0 !important;
+        }
+        section {
+          margin-top: 28px !important;
+          break-inside: avoid;
+        }
+        .law,
+        .byte-card,
+        .stream,
+        .bitproof {
+          break-inside: avoid;
+          box-shadow: none !important;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        table,
+        thead,
+        tr {
+          break-inside: avoid;
+        }
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .btn,
+        input[type="text"] {
+          display: none !important;
+        }
+        .controls {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <a class="back" href="../">&larr; playground</a>
+
+      <header class="reveal" style="animation-delay: 0.05s">
+        <div class="eyebrow">Interactive &middot; Binary &amp; boolean lab</div>
+        <h1 style="margin-top: 18px">Flip a bit.<br />Watch the logic move.</h1>
+        <p class="lede">
+          Two live instruments. The first turns text into raw ASCII bytes you
+          can toggle bit by bit. The second shows De Morgan&rsquo;s laws holding
+          true &mdash; as switches, as truth tables, and as eight parallel bits
+          at once.
+        </p>
+      </header>
+
+      <!-- ============ SECTION 1 ============ -->
+      <section class="reveal" style="animation-delay: 0.18s">
+        <div class="sec-head">
+          <h2>01 &nbsp;ASCII &rarr; bits</h2>
+          <p>
+            Type anything. Each character becomes one byte, most significant bit
+            first. Click any bit to flip it &mdash; the character, the decimal
+            value and the hex all follow.
+          </p>
+        </div>
+
+        <div class="controls">
+          <input
+            type="text"
+            id="textInput"
+            value="Play"
+            maxlength="16"
+            spellcheck="false"
+            aria-label="Text to convert to bits"
+          />
+          <button class="btn" id="btnCase" type="button">
+            Flip bit 5 (case)
+          </button>
+          <button class="btn" id="btnInvert" type="button">
+            Invert all bits
+          </button>
+          <button class="btn" id="btnReset" type="button">Reset</button>
+        </div>
+
+        <div class="bytes" id="bytes"></div>
+
+        <div class="stream">
+          <div class="row">
+            <div class="field-label">Binary</div>
+            <div class="val" id="outBin"></div>
+          </div>
+          <div class="row">
+            <div class="field-label">Hex</div>
+            <div class="val" id="outHex"></div>
+          </div>
+          <div class="row">
+            <div class="field-label">Decimal</div>
+            <div class="val" id="outDec"></div>
+          </div>
+        </div>
+
+        <div class="hint">
+          <span class="dot"></span>
+          <span
+            >Bit 5 (value&nbsp;32) is the case bit:
+            <code class="mono">A</code> = 0100&nbsp;0001,
+            <code class="mono">a</code> = 0110&nbsp;0001. One flip, whole other
+            letter.</span
+          >
+        </div>
+      </section>
+
+      <!-- ============ SECTION 2 ============ -->
+      <section class="reveal" style="animation-delay: 0.3s">
+        <div class="sec-head">
+          <h2>02 &nbsp;De Morgan&rsquo;s laws</h2>
+          <p>
+            Negation turns AND into OR and OR into AND. Toggle the two inputs
+            and both sides of each identity stay locked together &mdash; that is
+            the whole law, visible at a glance.
+          </p>
+        </div>
+
+        <div class="switches">
+          <button class="sw" id="swA" type="button" aria-pressed="true">
+            <span class="name">A</span
+            ><span class="track"><span class="knob"></span></span
+            ><span class="state">true</span>
+          </button>
+          <button class="sw" id="swB" type="button" aria-pressed="false">
+            <span class="name">B</span
+            ><span class="track"><span class="knob"></span></span
+            ><span class="state">false</span>
+          </button>
+        </div>
+
+        <div class="laws" id="laws"></div>
+
+        <h3 style="margin-top: 56px">Same law, as sets</h3>
+        <p class="venn-note">
+          Shade first and invert, or invert first and combine &mdash; both
+          routes land on the identical region. The dot marks where your current
+          A and B switches sit, so a filled dot means that expression is true
+          right now.
+        </p>
+        <div id="venns"></div>
+
+        <h3 style="margin-top: 56px">Every case, at once</h3>
+        <p style="margin: 8px 0 0">
+          The highlighted row is your current switch position. The two boxed
+          columns in each pair never disagree.
+        </p>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>A</th>
+                <th>B</th>
+                <th>A &and; B</th>
+                <th class="pair-a">&not;(A &and; B)</th>
+                <th class="pair-b">&not;A &or; &not;B</th>
+                <th>A &or; B</th>
+                <th class="pair-a">&not;(A &or; B)</th>
+                <th class="pair-b">&not;A &and; &not;B</th>
+              </tr>
+            </thead>
+            <tbody id="truthBody"></tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 56px">Eight proofs in parallel</h3>
+        <p style="margin: 8px 0 0">
+          The same law, applied bitwise to two bytes. Toggle the bits of A and
+          B: <code class="mono">~(A&amp;B)</code> and
+          <code class="mono">~A|~B</code> come out identical every time &mdash;
+          which is exactly why compilers and hardware trade one for the other
+          freely.
+        </p>
+
+        <div class="bitproof">
+          <div class="byte-editor">
+            <div class="proof-row">
+              <div class="lbl">
+                A &nbsp;<span id="labA" class="mono"></span>
+              </div>
+              <div class="bit-row" id="bitsA"></div>
+            </div>
+            <div class="proof-row">
+              <div class="lbl">
+                B &nbsp;<span id="labB" class="mono"></span>
+              </div>
+              <div class="bit-row" id="bitsB"></div>
+            </div>
+          </div>
+          <div class="controls" style="margin: 0">
+            <button class="btn" id="btnRand" type="button">Randomize</button>
+            <button class="btn" id="btnAlt" type="button">
+              A=10101010 B=11001100
+            </button>
+          </div>
+          <div class="proof-grid" id="proofGrid"></div>
+          <div class="match-note">
+            <span class="badge" id="proofBadge">identical</span
+            ><span id="proofText"></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        ASCII is 7 bits inside an 8-bit byte &mdash; codes 0&ndash;127. Values
+        above 127 shown here are raw byte values with no printable ASCII glyph.
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var PLACE = [128, 64, 32, 16, 8, 4, 2, 1];
+        var DEFAULT_TEXT = "Play";
+        var state = {
+          text: DEFAULT_TEXT,
+          a: true,
+          b: false,
+          byteA: 0xca,
+          byteB: 0x6c,
+        };
+
+        var CTRL = {
+          0: "NUL",
+          1: "SOH",
+          2: "STX",
+          3: "ETX",
+          4: "EOT",
+          5: "ENQ",
+          6: "ACK",
+          7: "BEL",
+          8: "BS",
+          9: "TAB",
+          10: "LF",
+          11: "VT",
+          12: "FF",
+          13: "CR",
+          27: "ESC",
+          32: "SP",
+          127: "DEL",
+        };
+
+        function pad8(n) {
+          var s = n.toString(2);
+          while (s.length < 8) s = "0" + s;
+          return s;
+        }
+        function hex2(n) {
+          var s = n.toString(16).toUpperCase();
+          return s.length < 2 ? "0" + s : s;
+        }
+        function codes() {
+          var out = [];
+          for (var i = 0; i < state.text.length; i++)
+            out.push(state.text.charCodeAt(i) & 0xff);
+          return out;
+        }
+
+        /* ---------- section 1 ---------- */
+        function renderBytes() {
+          var host = document.getElementById("bytes");
+          host.textContent = "";
+          codes().forEach(function (code, i) {
+            var card = document.createElement("div");
+            card.className = "byte-card";
+
+            var top = document.createElement("div");
+            top.className = "byte-top";
+            var glyph = document.createElement("div");
+            glyph.className = "glyph";
+            if (CTRL[code] !== undefined) {
+              glyph.className += " special";
+              glyph.textContent = CTRL[code];
+            } else if (code < 32 || code > 126) {
+              glyph.className += " special";
+              glyph.textContent = "0x" + hex2(code);
+            } else {
+              glyph.textContent = String.fromCharCode(code);
+            }
+            var meta = document.createElement("div");
+            meta.className = "byte-meta";
+            var m1 = document.createElement("div");
+            m1.className = "m1";
+            m1.textContent = code + "  ·  0x" + hex2(code);
+            var m2 = document.createElement("div");
+            m2.className = "m2";
+            m2.textContent = "byte " + (i + 1);
+            meta.appendChild(m1);
+            meta.appendChild(m2);
+            top.appendChild(glyph);
+            top.appendChild(meta);
+            card.appendChild(top);
+
+            var row = document.createElement("div");
+            row.className = "bit-row";
+            PLACE.forEach(function (p, k) {
+              var col = document.createElement("div");
+              col.className = "bit-col";
+              var on = (code & p) !== 0;
+              var btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "bit";
+              btn.setAttribute("aria-pressed", on ? "true" : "false");
+              btn.setAttribute(
+                "aria-label",
+                "byte " + (i + 1) + " bit " + (7 - k) + ", value " + p,
+              );
+              btn.textContent = on ? "1" : "0";
+              btn.addEventListener("click", function () {
+                flipBit(i, p);
+              });
+              var place = document.createElement("div");
+              place.className = "place";
+              place.innerHTML = "<b>" + p + "</b>";
+              col.appendChild(btn);
+              col.appendChild(place);
+              row.appendChild(col);
+            });
+            card.appendChild(row);
+            host.appendChild(card);
+          });
+          syncInput();
+          renderStream();
+        }
+
+        // Keep the text field in step with the bits, whichever one the user touched.
+        // Guarded so typing never reassigns the value mid-edit and jumps the caret.
+        function syncInput() {
+          var input = document.getElementById("textInput");
+          if (input.value !== state.text) input.value = state.text;
+        }
+
+        function renderStream() {
+          var cs = codes();
+          document.getElementById("outBin").textContent =
+            cs.map(pad8).join(" ") || "—";
+          document.getElementById("outHex").textContent =
+            cs
+              .map(function (c) {
+                return "0x" + hex2(c);
+              })
+              .join(" ") || "—";
+          document.getElementById("outDec").textContent = cs.join(" ") || "—";
+        }
+
+        function setText(t) {
+          var clean = "";
+          for (var i = 0; i < t.length && clean.length < 16; i++) {
+            var c = t.charCodeAt(i);
+            clean += c > 255 ? "?" : t.charAt(i);
+          }
+          state.text = clean;
+          renderBytes();
+        }
+
+        function flipBit(index, place) {
+          var code = (state.text.charCodeAt(index) & 0xff) ^ place;
+          state.text =
+            state.text.slice(0, index) +
+            String.fromCharCode(code) +
+            state.text.slice(index + 1);
+          renderBytes();
+        }
+
+        function mapCodes(fn) {
+          var s = "";
+          codes().forEach(function (c, i) {
+            s += String.fromCharCode(fn(c, i) & 0xff);
+          });
+          state.text = s;
+          renderBytes();
+        }
+
+        document
+          .getElementById("textInput")
+          .addEventListener("input", function (e) {
+            setText(e.target.value);
+          });
+        document
+          .getElementById("textInput")
+          .addEventListener("keydown", function (e) {
+            if (e.key === "Enter") e.preventDefault();
+          });
+        document
+          .getElementById("btnCase")
+          .addEventListener("click", function () {
+            mapCodes(function (c) {
+              var up = c >= 65 && c <= 90,
+                low = c >= 97 && c <= 122;
+              return up || low ? c ^ 0x20 : c;
+            });
+          });
+        document
+          .getElementById("btnInvert")
+          .addEventListener("click", function () {
+            mapCodes(function (c) {
+              return ~c;
+            });
+          });
+        document
+          .getElementById("btnReset")
+          .addEventListener("click", function () {
+            setText(DEFAULT_TEXT);
+          });
+
+        /* ---------- section 2: circuits ---------- */
+        function hotClass(base, v) {
+          return v ? base + " hot" : base;
+        }
+
+        function svgChain(op, a, b) {
+          // A,B -> [op] -> NOT -> out
+          var g = op === "AND" ? a && b : a || b;
+          var out = !g;
+          return (
+            '<svg viewBox="0 0 420 130" role="img" aria-label="' +
+            op +
+            ' gate followed by NOT">' +
+            '<text x="6" y="40" class="' +
+            hotClass("pin-label", a) +
+            '">A ' +
+            (a ? 1 : 0) +
+            "</text>" +
+            '<text x="6" y="104" class="' +
+            hotClass("pin-label", b) +
+            '">B ' +
+            (b ? 1 : 0) +
+            "</text>" +
+            '<path class="' +
+            hotClass("wire", a) +
+            '" d="M46 35 H110 V52 H150"/>' +
+            '<path class="' +
+            hotClass("wire", b) +
+            '" d="M46 99 H110 V82 H150"/>' +
+            '<rect class="gate" x="150" y="37" width="78" height="60" rx="6"/>' +
+            '<text x="168" y="73" class="gate-label">' +
+            op +
+            "</text>" +
+            '<path class="' +
+            hotClass("wire", g) +
+            '" d="M228 67 H268"/>' +
+            '<rect class="gate" x="268" y="50" width="44" height="34" rx="6"/>' +
+            '<text x="283" y="72" class="gate-label">&not;</text>' +
+            '<path class="' +
+            hotClass("wire", out) +
+            '" d="M312 67 H358"/>' +
+            '<circle class="' +
+            hotClass("node", out) +
+            '" cx="362" cy="67" r="4"/>' +
+            '<text x="374" y="72" class="' +
+            hotClass("pin-label", out) +
+            '">' +
+            (out ? 1 : 0) +
+            "</text>" +
+            "</svg>"
+          );
+        }
+
+        function svgSplit(op, a, b) {
+          // A->NOT, B->NOT -> [op] -> out
+          var na = !a,
+            nb = !b;
+          var out = op === "AND" ? na && nb : na || nb;
+          return (
+            '<svg viewBox="0 0 420 130" role="img" aria-label="two NOT gates feeding an ' +
+            op +
+            ' gate">' +
+            '<text x="6" y="40" class="' +
+            hotClass("pin-label", a) +
+            '">A ' +
+            (a ? 1 : 0) +
+            "</text>" +
+            '<text x="6" y="104" class="' +
+            hotClass("pin-label", b) +
+            '">B ' +
+            (b ? 1 : 0) +
+            "</text>" +
+            '<path class="' +
+            hotClass("wire", a) +
+            '" d="M46 35 H74"/>' +
+            '<path class="' +
+            hotClass("wire", b) +
+            '" d="M46 99 H74"/>' +
+            '<rect class="gate" x="74" y="18" width="44" height="34" rx="6"/>' +
+            '<text x="89" y="40" class="gate-label">&not;</text>' +
+            '<rect class="gate" x="74" y="82" width="44" height="34" rx="6"/>' +
+            '<text x="89" y="104" class="gate-label">&not;</text>' +
+            '<path class="' +
+            hotClass("wire", na) +
+            '" d="M118 35 H150 V52 H176"/>' +
+            '<path class="' +
+            hotClass("wire", nb) +
+            '" d="M118 99 H150 V82 H176"/>' +
+            '<rect class="gate" x="176" y="37" width="78" height="60" rx="6"/>' +
+            '<text x="194" y="73" class="gate-label">' +
+            op +
+            "</text>" +
+            '<path class="' +
+            hotClass("wire", out) +
+            '" d="M254 67 H358"/>' +
+            '<circle class="' +
+            hotClass("node", out) +
+            '" cx="362" cy="67" r="4"/>' +
+            '<text x="374" y="72" class="' +
+            hotClass("pin-label", out) +
+            '">' +
+            (out ? 1 : 0) +
+            "</text>" +
+            "</svg>"
+          );
+        }
+
+        var LAWS = [
+          {
+            id: "nand",
+            lhs: "&not;(A &and; B)",
+            rhs: "&not;A &or; &not;B",
+            gate: "AND",
+            outOp: "OR",
+            note: "NOT of an AND is an OR of the NOTs.",
+            lf: function (a, b) {
+              return !(a && b);
+            },
+            rf: function (a, b) {
+              return !a || !b;
+            },
+          },
+          {
+            id: "nor",
+            lhs: "&not;(A &or; B)",
+            rhs: "&not;A &and; &not;B",
+            gate: "OR",
+            outOp: "AND",
+            note: "NOT of an OR is an AND of the NOTs.",
+            lf: function (a, b) {
+              return !(a || b);
+            },
+            rf: function (a, b) {
+              return !a && !b;
+            },
+          },
+        ];
+
+        function renderLaws() {
+          var host = document.getElementById("laws");
+          host.textContent = "";
+          LAWS.forEach(function (law) {
+            var L = law.lf(state.a, state.b),
+              R = law.rf(state.a, state.b);
+            var card = document.createElement("div");
+            card.className = "law";
+            card.innerHTML =
+              '<div class="law-title"><div class="eyebrow">' +
+              (law.id === "nand" ? "law one" : "law two") +
+              "</div>" +
+              '<span class="badge">' +
+              (L === R ? "equal · " + (L ? 1 : 0) : "mismatch") +
+              "</span></div>" +
+              '<div class="equation">' +
+              '<span class="side"><span class="expr">' +
+              law.lhs +
+              "</span>" +
+              '<span class="val-pill' +
+              (L ? " on" : "") +
+              '">' +
+              (L ? "TRUE" : "FALSE") +
+              "</span></span>" +
+              '<span class="eq-sign">&equiv;</span>' +
+              '<span class="side"><span class="expr">' +
+              law.rhs +
+              "</span>" +
+              '<span class="val-pill' +
+              (R ? " on" : "") +
+              '">' +
+              (R ? "TRUE" : "FALSE") +
+              "</span></span>" +
+              "</div>" +
+              '<p style="margin:2px 0 6px;font-size:14px">' +
+              law.note +
+              "</p>" +
+              '<div class="circuit-cap">Left side</div>' +
+              '<div class="circuit">' +
+              svgChain(law.gate, state.a, state.b) +
+              "</div>" +
+              '<div class="circuit-cap">Right side</div>' +
+              '<div class="circuit">' +
+              svgSplit(law.outOp, state.a, state.b) +
+              "</div>";
+            host.appendChild(card);
+          });
+        }
+
+        /* ---------- section 2: sets ---------- */
+        // Four disjoint regions make up the universe; every expression is just a
+        // subset of these, so equality can be computed rather than asserted.
+        var ATOMS = ["neither", "onlyA", "onlyB", "both"];
+        var DOT_AT = {
+          neither: [15, 17],
+          onlyA: [34, 45],
+          onlyB: [86, 45],
+          both: [60, 45],
+        };
+        var vseq = 0;
+
+        function atomInputs(atom) {
+          return {
+            a: atom === "onlyA" || atom === "both",
+            b: atom === "onlyB" || atom === "both",
+          };
+        }
+        function shadeSet(fn) {
+          return ATOMS.filter(function (at) {
+            var v = atomInputs(at);
+            return fn(v.a, v.b);
+          });
+        }
+        function currentAtom() {
+          return state.a && state.b
+            ? "both"
+            : state.a
+              ? "onlyA"
+              : state.b
+                ? "onlyB"
+                : "neither";
+        }
+
+        function vennSVG(fn) {
+          var id = "v" + ++vseq;
+          var set = shadeSet(fn);
+          var here = currentAtom();
+          var dot = DOT_AT[here];
+          // Mask luminance keys must be literal black/white; they are never rendered as colour.
+          var defs =
+            "<defs>" +
+            '<clipPath id="ca' +
+            id +
+            '"><circle cx="48" cy="45" r="26"/></clipPath>' +
+            '<mask id="mnb' +
+            id +
+            '"><rect x="0" y="0" width="120" height="90" fill="#fff"/><circle cx="72" cy="45" r="26" fill="#000"/></mask>' +
+            '<mask id="mna' +
+            id +
+            '"><rect x="0" y="0" width="120" height="90" fill="#fff"/><circle cx="48" cy="45" r="26" fill="#000"/></mask>' +
+            '<mask id="mn' +
+            id +
+            '"><rect x="0" y="0" width="120" height="90" fill="#fff"/><circle cx="48" cy="45" r="26" fill="#000"/><circle cx="72" cy="45" r="26" fill="#000"/></mask>' +
+            "</defs>";
+          var shade = "";
+          if (set.indexOf("neither") !== -1)
+            shade +=
+              '<rect class="v-fill" x="4" y="4" width="112" height="82" mask="url(#mn' +
+              id +
+              ')"/>';
+          if (set.indexOf("onlyA") !== -1)
+            shade +=
+              '<circle class="v-fill" cx="48" cy="45" r="26" mask="url(#mnb' +
+              id +
+              ')"/>';
+          if (set.indexOf("onlyB") !== -1)
+            shade +=
+              '<circle class="v-fill" cx="72" cy="45" r="26" mask="url(#mna' +
+              id +
+              ')"/>';
+          if (set.indexOf("both") !== -1)
+            shade +=
+              '<g clip-path="url(#ca' +
+              id +
+              ')"><circle class="v-fill" cx="72" cy="45" r="26"/></g>';
+          return (
+            '<svg viewBox="0 0 120 90" role="img">' +
+            defs +
+            '<rect class="v-universe" x="4" y="4" width="112" height="82" rx="3"/>' +
+            shade +
+            '<circle class="v-outline" cx="48" cy="45" r="26"/>' +
+            '<circle class="v-outline" cx="72" cy="45" r="26"/>' +
+            '<text class="v-label" x="24" y="83">A</text>' +
+            '<text class="v-label" x="90" y="83">B</text>' +
+            '<circle class="v-dot ' +
+            (set.indexOf(here) !== -1 ? "in" : "out") +
+            '" cx="' +
+            dot[0] +
+            '" cy="' +
+            dot[1] +
+            '" r="3.6"/>' +
+            "</svg>"
+          );
+        }
+
+        function vennPanel(fn, cap, isResult) {
+          return (
+            '<div class="venn-panel' +
+            (isResult ? " result" : "") +
+            '">' +
+            '<div class="frame">' +
+            vennSVG(fn) +
+            "</div>" +
+            '<div class="venn-cap">' +
+            cap +
+            "</div></div>"
+          );
+        }
+
+        var VENNS = [
+          {
+            key: "nand",
+            inner: "&and;",
+            outer: "&or;",
+            step: function (a, b) {
+              return a && b;
+            },
+            lhs: function (a, b) {
+              return !(a && b);
+            },
+            rhs: function (a, b) {
+              return !a || !b;
+            },
+          },
+          {
+            key: "nor",
+            inner: "&or;",
+            outer: "&and;",
+            step: function (a, b) {
+              return a || b;
+            },
+            lhs: function (a, b) {
+              return !(a || b);
+            },
+            rhs: function (a, b) {
+              return !a && !b;
+            },
+          },
+        ];
+
+        function renderVenns() {
+          vseq = 0;
+          var host = document.getElementById("venns");
+          host.textContent = "";
+          VENNS.forEach(function (v) {
+            var same =
+              shadeSet(v.lhs).slice().sort().join(",") ===
+              shadeSet(v.rhs).slice().sort().join(",");
+            var n = shadeSet(v.lhs).length;
+            var wrap = document.createElement("div");
+            wrap.className = "venn-law";
+            wrap.innerHTML =
+              '<div class="venn-head"><div class="eyebrow">' +
+              (v.key === "nand" ? "law one" : "law two") +
+              "</div>" +
+              '<span class="badge">' +
+              (same
+                ? "same " + n + " region" + (n === 1 ? "" : "s")
+                : "mismatch") +
+              "</span></div>" +
+              '<div class="venn-row">' +
+              vennPanel(v.step, "A " + v.inner + " B", false) +
+              '<div class="venn-op">&rarr;</div>' +
+              vennPanel(v.lhs, "&not;(A " + v.inner + " B)", true) +
+              '<div class="venn-op">&equiv;</div>' +
+              vennPanel(
+                function (a) {
+                  return !a;
+                },
+                "&not;A",
+                false,
+              ) +
+              '<div class="venn-op">' +
+              v.outer +
+              "</div>" +
+              vennPanel(
+                function (a, b) {
+                  return !b;
+                },
+                "&not;B",
+                false,
+              ) +
+              '<div class="venn-op">&rarr;</div>' +
+              vennPanel(v.rhs, "&not;A " + v.outer + " &not;B", true) +
+              "</div>";
+            host.appendChild(wrap);
+          });
+        }
+
+        function renderTruth() {
+          var body = document.getElementById("truthBody");
+          body.textContent = "";
+          [
+            [false, false],
+            [false, true],
+            [true, false],
+            [true, true],
+          ].forEach(function (r) {
+            var a = r[0],
+              b = r[1];
+            var vals = [
+              a,
+              b,
+              a && b,
+              !(a && b),
+              !a || !b,
+              a || b,
+              !(a || b),
+              !a && !b,
+            ];
+            var tr = document.createElement("tr");
+            if (a === state.a && b === state.b) tr.className = "active";
+            vals.forEach(function (v, i) {
+              var td = document.createElement("td");
+              td.textContent = v ? "1" : "0";
+              if (!v) td.className = "zero";
+              if (i === 3 || i === 6) td.className += " pair-a";
+              if (i === 4 || i === 7) td.className += " pair-b";
+              tr.appendChild(td);
+            });
+            body.appendChild(tr);
+          });
+        }
+
+        function renderSwitch(el, val) {
+          el.setAttribute("aria-pressed", val ? "true" : "false");
+          el.querySelector(".state").textContent = val ? "true" : "false";
+        }
+
+        /* ---------- section 2: bitwise ---------- */
+        function cellsRow(label, value, isResult) {
+          var row = document.createElement("div");
+          row.className = "proof-row" + (isResult ? " result" : "");
+          var lbl = document.createElement("div");
+          lbl.className = "lbl";
+          lbl.textContent = label;
+          var cells = document.createElement("div");
+          cells.className = "cells";
+          PLACE.forEach(function (p) {
+            var c = document.createElement("div");
+            var on = (value & p) !== 0;
+            c.className = "cell" + (on ? " on" : "");
+            c.textContent = on ? "1" : "0";
+            cells.appendChild(c);
+          });
+          row.appendChild(lbl);
+          row.appendChild(cells);
+          return row;
+        }
+
+        function renderByteBits(hostId, key) {
+          var host = document.getElementById(hostId);
+          host.textContent = "";
+          PLACE.forEach(function (p, k) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "bit";
+            var on = (state[key] & p) !== 0;
+            btn.setAttribute("aria-pressed", on ? "true" : "false");
+            btn.setAttribute("aria-label", key + " bit " + (7 - k));
+            btn.textContent = on ? "1" : "0";
+            btn.addEventListener("click", function () {
+              state[key] = (state[key] ^ p) & 0xff;
+              renderProof();
+            });
+            host.appendChild(btn);
+          });
+        }
+
+        function renderProof() {
+          var A = state.byteA,
+            B = state.byteB;
+          var and = A & B,
+            nand = ~and & 0xff;
+          var nA = ~A & 0xff,
+            nB = ~B & 0xff;
+          var orNots = (nA | nB) & 0xff;
+          var or = A | B,
+            nor = ~or & 0xff,
+            andNots = nA & nB & 0xff;
+
+          renderByteBits("bitsA", "byteA");
+          renderByteBits("bitsB", "byteB");
+          document.getElementById("labA").textContent = "0x" + hex2(A);
+          document.getElementById("labB").textContent = "0x" + hex2(B);
+
+          var grid = document.getElementById("proofGrid");
+          grid.textContent = "";
+          grid.appendChild(cellsRow("A & B", and, false));
+          grid.appendChild(cellsRow("~(A & B)", nand, true));
+          var d1 = document.createElement("div");
+          d1.className = "divider";
+          grid.appendChild(d1);
+          grid.appendChild(cellsRow("~A", nA, false));
+          grid.appendChild(cellsRow("~B", nB, false));
+          grid.appendChild(cellsRow("~A | ~B", orNots, true));
+          var d2 = document.createElement("div");
+          d2.className = "divider";
+          grid.appendChild(d2);
+          grid.appendChild(cellsRow("~(A | B)", nor, true));
+          grid.appendChild(cellsRow("~A & ~B", andNots, true));
+
+          var ok = nand === orNots && nor === andNots;
+          document.getElementById("proofBadge").textContent = ok
+            ? "identical"
+            : "mismatch";
+          document.getElementById("proofText").textContent =
+            "~(A&B) = 0x" +
+            hex2(nand) +
+            " and ~A|~B = 0x" +
+            hex2(orNots) +
+            "   ·   ~(A|B) = 0x" +
+            hex2(nor) +
+            " and ~A&~B = 0x" +
+            hex2(andNots) +
+            ".";
+        }
+
+        document.getElementById("swA").addEventListener("click", function () {
+          state.a = !state.a;
+          renderSwitch(this, state.a);
+          renderLaws();
+          renderVenns();
+          renderTruth();
+        });
+        document.getElementById("swB").addEventListener("click", function () {
+          state.b = !state.b;
+          renderSwitch(this, state.b);
+          renderLaws();
+          renderVenns();
+          renderTruth();
+        });
+        document
+          .getElementById("btnRand")
+          .addEventListener("click", function () {
+            state.byteA = Math.floor(Math.random() * 256);
+            state.byteB = Math.floor(Math.random() * 256);
+            renderProof();
+          });
+        document
+          .getElementById("btnAlt")
+          .addEventListener("click", function () {
+            state.byteA = 0xaa;
+            state.byteB = 0xcc;
+            renderProof();
+          });
+
+        renderBytes();
+        renderSwitch(document.getElementById("swA"), state.a);
+        renderSwitch(document.getElementById("swB"), state.b);
+        renderLaws();
+        renderVenns();
+        renderTruth();
+        renderProof();
+      })();
+    </script>
+  </body>
+</html>

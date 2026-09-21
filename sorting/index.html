@@ -1,0 +1,1292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sorting Visualizer</title>
+    <style>
+      :root {
+        --artifact-background: #ffffff;
+        --artifact-background-light: #f1f3f6;
+        --artifact-background-mid: #e9ecf1;
+        --artifact-border-light: #e3e6ec;
+        --artifact-border-dark: #cdd2db;
+        --artifact-primary-brand: #3559e6;
+        --artifact-primary-highlight: #0d0f14;
+        --artifact-primary-hover: #2442b8;
+        --artifact-selected: #eaeefc;
+        --artifact-text-primary: #11141a;
+        --artifact-text-secondary: #5c6470;
+        --artifact-text-highlight: #e8eefc;
+        --artifact-positive-background: #e8f6ee;
+        --artifact-positive: #159a6a;
+        --artifact-negative: #dc4c4c;
+        --artifact-on-brand-text: #ffffff;
+        --artifact-bar-idle: #c2c9d4;
+        --artifact-bar-part: #aebdf0;
+      }
+      html[data-theme="dark"] {
+        --artifact-background: #0a0b0e;
+        --artifact-background-light: #121419;
+        --artifact-background-mid: #181b22;
+        --artifact-border-light: #23262e;
+        --artifact-border-dark: #343844;
+        --artifact-primary-brand: #6a92ff;
+        --artifact-primary-highlight: #f5f7fb;
+        --artifact-primary-hover: #88a8ff;
+        --artifact-selected: #1a2030;
+        --artifact-text-primary: #eef0f4;
+        --artifact-text-secondary: #9aa0ad;
+        --artifact-text-highlight: #14213d;
+        --artifact-positive-background: #0e2a1d;
+        --artifact-positive: #46d39a;
+        --artifact-negative: #ff6b6b;
+        --artifact-on-brand-text: #0a0b0e;
+        --artifact-bar-idle: #3a3f4b;
+        --artifact-bar-part: #34467f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--artifact-background);
+        color: var(--artifact-text-primary);
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        letter-spacing: -0.005em;
+      }
+      .shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 64px 28px 96px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-weight: 400;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+      h1 {
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        font-weight: 300;
+      }
+      h2 {
+        font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+      }
+      h3 {
+        font-size: 1.125rem;
+        font-weight: 500;
+      }
+      p {
+        color: var(--artifact-text-secondary);
+      }
+      .eyebrow,
+      .field-label,
+      th {
+        font-family:
+          "SF Mono", "IBM Plex Mono", "Cascadia Code", "Consolas", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+      }
+      .mono,
+      code {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 13px;
+      }
+      .lede {
+        max-width: 58ch;
+        font-size: 1.0625rem;
+        margin: 20px 0 0;
+      }
+      .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .btn {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 11px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        background: var(--artifact-background-light);
+        color: var(--artifact-text-primary);
+        border: 1px solid var(--artifact-border-dark);
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .btn:hover {
+        background: var(--artifact-selected);
+        border-color: var(--artifact-primary-brand);
+        color: var(--artifact-text-primary);
+      }
+      .btn.solid {
+        background: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--artifact-primary-brand);
+      }
+      .btn.solid:hover {
+        background: var(--artifact-primary-hover);
+        color: var(--artifact-on-brand-text);
+      }
+      .btn[aria-pressed="true"] {
+        background: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--artifact-primary-brand);
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      section {
+        margin-top: 72px;
+      }
+      .sec-head {
+        border-bottom: 1px solid var(--artifact-border-light);
+        padding-bottom: 18px;
+      }
+      .sec-head p {
+        margin: 6px 0 0;
+        max-width: 62ch;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-top: 26px;
+      }
+      .group {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .group + .group {
+        margin-left: 4px;
+      }
+      .sliders {
+        display: flex;
+        gap: 26px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+      .slider {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 190px;
+      }
+      .slider .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .slider .num {
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        color: var(--artifact-text-primary);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--artifact-border-dark);
+        outline: none;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--artifact-primary-brand);
+        cursor: pointer;
+        border: none;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border: none;
+        border-radius: 50%;
+        background: var(--artifact-primary-brand);
+        cursor: pointer;
+      }
+
+      .stage {
+        position: relative;
+        height: 340px;
+        margin-top: 26px;
+        padding: 14px 14px 0;
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .band {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: var(--artifact-text-highlight);
+        z-index: 0;
+        transition:
+          left 0.12s linear,
+          width 0.12s linear;
+      }
+      .bar {
+        position: relative;
+        z-index: 1;
+        flex: 1 1 0;
+        min-width: 2px;
+        background: var(--artifact-bar-idle);
+        border-radius: 2px 2px 0 0;
+      }
+      .bar.part {
+        background: var(--artifact-bar-part);
+      }
+      .bar.cmp {
+        background: var(--artifact-primary-brand);
+      }
+      .bar.pivot {
+        background: var(--artifact-negative);
+      }
+      .bar.sorted {
+        background: var(--artifact-positive);
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-top: 14px;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: var(--artifact-text-secondary);
+      }
+      .swatch {
+        width: 11px;
+        height: 11px;
+        border-radius: 2px;
+        display: inline-block;
+      }
+      .sw-idle {
+        background: var(--artifact-bar-idle);
+      }
+      .sw-part {
+        background: var(--artifact-bar-part);
+      }
+      .sw-cmp {
+        background: var(--artifact-primary-brand);
+      }
+      .sw-pivot {
+        background: var(--artifact-negative);
+      }
+      .sw-sorted {
+        background: var(--artifact-positive);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px;
+        margin-top: 22px;
+      }
+      .stat {
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 8px;
+        padding: 16px 18px;
+      }
+      .stat .v {
+        font-size: 2rem;
+        font-weight: 300;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat .k {
+        font-family: "SF Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+        margin-top: 2px;
+      }
+      .readout {
+        font-family: "SF Mono", monospace;
+        font-size: 12.5px;
+        color: var(--artifact-text-secondary);
+        margin-top: 14px;
+        min-height: 20px;
+      }
+      .scrub {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .scrub input[type="range"] {
+        width: 100%;
+      }
+
+      .panel {
+        margin-top: 26px;
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 8px;
+        padding: 24px;
+      }
+      .panel .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .panel p {
+        margin: 10px 0 0;
+        max-width: 70ch;
+        color: var(--artifact-text-secondary);
+      }
+      .cx {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--artifact-border-light);
+      }
+      .cx div span {
+        display: block;
+        font-family: "SF Mono", monospace;
+        font-size: 15px;
+        color: var(--artifact-text-primary);
+        margin-top: 3px;
+      }
+      .pill {
+        font-family: "SF Mono", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: 4px;
+        border: 1px solid var(--artifact-border-dark);
+        color: var(--artifact-text-secondary);
+      }
+      .pill.yes {
+        background: var(--artifact-positive-background);
+        border-color: var(--artifact-positive);
+        color: var(--artifact-text-primary);
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 24px;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--artifact-border-light);
+      }
+      td {
+        font-size: 14px;
+      }
+      td.m {
+        font-family: "SF Mono", monospace;
+        font-size: 13px;
+      }
+      tr.on td {
+        background: var(--artifact-text-highlight);
+      }
+      .tbl-wrap {
+        overflow-x: auto;
+      }
+      .footer {
+        margin-top: 72px;
+        padding-top: 22px;
+        border-top: 1px solid var(--artifact-border-light);
+        font-size: 13.5px;
+        color: var(--artifact-text-secondary);
+      }
+      .back {
+        display: inline-block;
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+        text-decoration: none;
+        margin-bottom: 26px;
+      }
+      .back:hover {
+        color: var(--artifact-primary-brand);
+      }
+      @media (max-width: 620px) {
+        .shell {
+          padding: 40px 18px 72px;
+        }
+        .stage {
+          height: 240px;
+        }
+      }
+      @media print {
+        @page {
+          size: auto !important;
+        }
+        body {
+          margin: 0;
+          padding: 0.4in 0.6in;
+          background: #fff;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .shell {
+          max-width: 100% !important;
+          width: 100% !important;
+          padding: 0 !important;
+        }
+        section {
+          margin-top: 28px !important;
+          break-inside: avoid;
+        }
+        .card,
+        .stage,
+        .panel,
+        table,
+        tr,
+        .tool {
+          break-inside: avoid;
+          box-shadow: none !important;
+        }
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .controls,
+        .btn,
+        input[type="range"],
+        .scrub {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <a class="back" href="../">&larr; playground</a>
+
+      <header class="reveal" style="animation-delay: 0.05s">
+        <div class="eyebrow">Interactive &middot; Sorting algorithms</div>
+        <h1 style="margin-top: 18px">Five ways to<br />order a list.</h1>
+        <p class="lede">
+          Every comparison, swap and write, recorded up front and played back
+          frame by frame. Scrub the timeline, step one operation at a time, and
+          watch where the O(n&sup2;) algorithms lose to the O(n&nbsp;log&nbsp;n)
+          ones &mdash; and where they don&rsquo;t.
+        </p>
+      </header>
+
+      <section class="reveal" style="animation-delay: 0.18s">
+        <div class="controls">
+          <div class="group" id="algoGroup"></div>
+        </div>
+        <div class="controls">
+          <div class="group" id="distGroup"></div>
+        </div>
+        <div class="sliders">
+          <label class="slider">
+            <span class="top"
+              ><span class="field-label">Array size</span
+              ><span class="num" id="sizeNum">40</span></span
+            >
+            <input
+              type="range"
+              id="sizeRange"
+              min="8"
+              max="80"
+              step="1"
+              value="40"
+            />
+          </label>
+          <label class="slider">
+            <span class="top"
+              ><span class="field-label">Speed</span
+              ><span class="num" id="speedNum">55</span></span
+            >
+            <input
+              type="range"
+              id="speedRange"
+              min="1"
+              max="100"
+              step="1"
+              value="55"
+            />
+          </label>
+        </div>
+        <div class="controls">
+          <button class="btn solid" id="btnPlay" type="button">Play</button>
+          <button class="btn" id="btnStepB" type="button">&larr; Step</button>
+          <button class="btn" id="btnStepF" type="button">Step &rarr;</button>
+          <button class="btn" id="btnReset" type="button">Reset</button>
+          <button class="btn" id="btnShuffle" type="button">New array</button>
+        </div>
+
+        <div class="stage" id="stage">
+          <div class="band" id="band" style="display: none"></div>
+        </div>
+
+        <div class="scrub">
+          <span class="field-label">Timeline</span>
+          <input
+            type="range"
+            id="scrubRange"
+            min="0"
+            max="1"
+            step="1"
+            value="0"
+            aria-label="Scrub through operations"
+          />
+        </div>
+
+        <div class="legend">
+          <span><i class="swatch sw-idle"></i>unsorted</span>
+          <span><i class="swatch sw-cmp"></i>comparing</span>
+          <span><i class="swatch sw-pivot"></i>pivot</span>
+          <span><i class="swatch sw-part"></i>partially ordered</span>
+          <span><i class="swatch sw-sorted"></i>final position</span>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="v" id="statCmp">0</div>
+            <div class="k">Comparisons</div>
+          </div>
+          <div class="stat">
+            <div class="v" id="statSwap">0</div>
+            <div class="k">Swaps</div>
+          </div>
+          <div class="stat">
+            <div class="v" id="statWrite">0</div>
+            <div class="k">Writes</div>
+          </div>
+          <div class="stat">
+            <div class="v" id="statStep">0</div>
+            <div class="k" id="statStepK">of 0 operations</div>
+          </div>
+        </div>
+        <div class="readout" id="readout">&nbsp;</div>
+
+        <div class="panel">
+          <div class="top">
+            <h3 id="algoName">Bubble sort</h3>
+            <span class="pill" id="algoStable">stable</span>
+          </div>
+          <p id="algoBlurb"></p>
+          <div class="cx">
+            <div>
+              <span class="field-label">Best</span><span id="cxBest"></span>
+            </div>
+            <div>
+              <span class="field-label">Average</span><span id="cxAvg"></span>
+            </div>
+            <div>
+              <span class="field-label">Worst</span><span id="cxWorst"></span>
+            </div>
+            <div>
+              <span class="field-label">Space</span><span id="cxSpace"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="reveal" style="animation-delay: 0.3s">
+        <div class="sec-head">
+          <h2>Side by side</h2>
+          <p>
+            The tradeoffs that matter in practice: whether it allocates, whether
+            equal elements keep their original order, and how badly the worst
+            case hurts.
+          </p>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Algorithm</th>
+                <th>Best</th>
+                <th>Average</th>
+                <th>Worst</th>
+                <th>Space</th>
+                <th>Stable</th>
+                <th>Where it wins</th>
+              </tr>
+            </thead>
+            <tbody id="refBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="footer">
+        Frames are generated by running each algorithm to completion before
+        playback, so scrubbing is exact rather than interpolated. Values are
+        1&ndash;100; bar height is proportional to value.
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        /* ---------------- algorithms as frame generators ---------------- */
+        function* bubble(a) {
+          var n = a.length,
+            swapped;
+          for (var i = 0; i < n - 1; i++) {
+            swapped = false;
+            for (var j = 0; j < n - 1 - i; j++) {
+              yield { op: "cmp", i: j, j: j + 1 };
+              if (a[j] > a[j + 1]) {
+                var t = a[j];
+                a[j] = a[j + 1];
+                a[j + 1] = t;
+                yield { op: "swap", i: j, j: j + 1 };
+                swapped = true;
+              }
+            }
+            yield { op: "sorted", i: n - 1 - i };
+            if (!swapped) {
+              for (var k = 0; k < n - 1 - i; k++) yield { op: "sorted", i: k };
+              return;
+            }
+          }
+          yield { op: "sorted", i: 0 };
+        }
+
+        function* insertion(a) {
+          var n = a.length;
+          yield { op: "part", i: 0 };
+          for (var i = 1; i < n; i++) {
+            var key = a[i],
+              j = i - 1;
+            while (j >= 0) {
+              yield { op: "cmp", i: j, j: i };
+              if (a[j] > key) {
+                a[j + 1] = a[j];
+                yield { op: "set", i: j + 1, v: a[j] };
+                j--;
+              } else break;
+            }
+            a[j + 1] = key;
+            yield { op: "set", i: j + 1, v: key };
+            yield { op: "part", i: i };
+          }
+          for (var k = 0; k < n; k++) yield { op: "sorted", i: k };
+        }
+
+        function* selection(a) {
+          var n = a.length;
+          for (var i = 0; i < n; i++) {
+            var min = i;
+            for (var j = i + 1; j < n; j++) {
+              yield { op: "cmp", i: j, j: min };
+              if (a[j] < a[min]) min = j;
+            }
+            if (min !== i) {
+              var t = a[i];
+              a[i] = a[min];
+              a[min] = t;
+              yield { op: "swap", i: i, j: min };
+            }
+            yield { op: "sorted", i: i };
+          }
+        }
+
+        function* mergeSort(a, lo, hi) {
+          if (hi - lo < 1) {
+            if (hi === lo) yield { op: "part", i: lo };
+            return;
+          }
+          var mid = (lo + hi) >> 1;
+          yield* mergeSort(a, lo, mid);
+          yield* mergeSort(a, mid + 1, hi);
+          yield { op: "band", lo: lo, hi: hi };
+          var left = a.slice(lo, mid + 1),
+            right = a.slice(mid + 1, hi + 1);
+          var i = 0,
+            j = 0,
+            k = lo;
+          while (i < left.length && j < right.length) {
+            yield { op: "cmp", i: lo + i, j: mid + 1 + j };
+            if (left[i] <= right[j]) {
+              a[k] = left[i++];
+            } else {
+              a[k] = right[j++];
+            }
+            yield { op: "set", i: k, v: a[k] };
+            yield { op: "part", i: k };
+            k++;
+          }
+          while (i < left.length) {
+            a[k] = left[i++];
+            yield { op: "set", i: k, v: a[k] };
+            yield { op: "part", i: k };
+            k++;
+          }
+          while (j < right.length) {
+            a[k] = right[j++];
+            yield { op: "set", i: k, v: a[k] };
+            yield { op: "part", i: k };
+            k++;
+          }
+        }
+
+        function* merge(a) {
+          yield* mergeSort(a, 0, a.length - 1);
+          yield { op: "band", lo: -1, hi: -1 };
+          for (var k = 0; k < a.length; k++) yield { op: "sorted", i: k };
+        }
+
+        function* quickSort(a, lo, hi) {
+          if (lo > hi) return;
+          if (lo === hi) {
+            yield { op: "sorted", i: lo };
+            return;
+          }
+          yield { op: "band", lo: lo, hi: hi };
+          var pivot = a[hi],
+            i = lo;
+          yield { op: "pivot", i: hi };
+          for (var j = lo; j < hi; j++) {
+            yield { op: "cmp", i: j, j: hi };
+            if (a[j] < pivot) {
+              if (i !== j) {
+                var t = a[i];
+                a[i] = a[j];
+                a[j] = t;
+                yield { op: "swap", i: i, j: j };
+              }
+              i++;
+            }
+          }
+          if (i !== hi) {
+            var u = a[i];
+            a[i] = a[hi];
+            a[hi] = u;
+            yield { op: "swap", i: i, j: hi };
+          }
+          yield { op: "sorted", i: i };
+          yield* quickSort(a, lo, i - 1);
+          yield* quickSort(a, i + 1, hi);
+        }
+
+        function* quick(a) {
+          yield* quickSort(a, 0, a.length - 1);
+          yield { op: "band", lo: -1, hi: -1 };
+          for (var k = 0; k < a.length; k++) yield { op: "sorted", i: k };
+        }
+
+        var ALGOS = {
+          bubble: {
+            name: "Bubble sort",
+            gen: bubble,
+            best: "O(n)",
+            avg: "O(n²)",
+            worst: "O(n²)",
+            space: "O(1)",
+            stable: true,
+            blurb:
+              "Repeatedly walks the array swapping adjacent pairs that are out of order, floating the largest remaining value to the end on each pass. Detects an already-sorted array in one clean pass, which is its only real strength.",
+            wins: "Teaching, and detecting an already-sorted array",
+          },
+          insertion: {
+            name: "Insertion sort",
+            gen: insertion,
+            best: "O(n)",
+            avg: "O(n²)",
+            worst: "O(n²)",
+            space: "O(1)",
+            stable: true,
+            blurb:
+              "Grows a sorted prefix one element at a time, shifting larger values right to open a slot. Genuinely fast on small or nearly sorted input, which is why real libraries fall back to it for short subarrays.",
+            wins: "Small arrays and nearly sorted data — used inside Timsort",
+          },
+          selection: {
+            name: "Selection sort",
+            gen: selection,
+            best: "O(n²)",
+            avg: "O(n²)",
+            worst: "O(n²)",
+            space: "O(1)",
+            stable: false,
+            blurb:
+              "Scans for the smallest remaining value and swaps it into place. Always does the same number of comparisons regardless of input, but makes at most n−1 swaps — the fewest writes of any comparison sort here.",
+            wins: "When writes are far more expensive than reads",
+          },
+          merge: {
+            name: "Merge sort",
+            gen: merge,
+            best: "O(n log n)",
+            avg: "O(n log n)",
+            worst: "O(n log n)",
+            space: "O(n)",
+            stable: true,
+            blurb:
+              "Splits until single elements, then merges sorted runs back together. The only algorithm here with no bad case — but it pays for that with a full extra array of scratch space.",
+            wins: "Guaranteed worst case, stability, linked lists, external sorting",
+          },
+          quick: {
+            name: "Quicksort",
+            gen: quick,
+            best: "O(n log n)",
+            avg: "O(n log n)",
+            worst: "O(n²)",
+            space: "O(log n)",
+            stable: false,
+            blurb:
+              "Picks a pivot, partitions everything around it, then recurses on each side. Fastest in practice thanks to cache-friendly in-place partitioning, but this last-element pivot degrades to O(n²) on sorted input — try the “sorted” distribution.",
+            wins: "General-purpose in-memory sorting",
+          },
+        };
+
+        var DISTS = {
+          random: "Random",
+          nearly: "Nearly sorted",
+          reversed: "Reversed",
+          sorted: "Sorted",
+          few: "Few unique",
+        };
+
+        /* ---------------- state ---------------- */
+        var S = {
+          algo: "bubble",
+          dist: "random",
+          size: 40,
+          speed: 55,
+          base: [],
+          arr: [],
+          frames: [],
+          pos: 0,
+          playing: false,
+          marks: [],
+          cmp: [],
+          pivot: -1,
+          band: null,
+          c: 0,
+          s: 0,
+          w: 0,
+          last: null,
+        };
+        var bars = [];
+
+        function makeArray() {
+          var n = S.size,
+            a = [],
+            i;
+          for (i = 0; i < n; i++) a.push(1 + Math.floor(Math.random() * 100));
+          if (S.dist === "sorted")
+            a.sort(function (x, y) {
+              return x - y;
+            });
+          if (S.dist === "reversed")
+            a.sort(function (x, y) {
+              return y - x;
+            });
+          if (S.dist === "nearly" && n > 1) {
+            a.sort(function (x, y) {
+              return x - y;
+            });
+            var swaps = Math.max(1, Math.round(n * 0.06));
+            for (i = 0; i < swaps; i++) {
+              var p = Math.floor(Math.random() * (n - 1));
+              var t = a[p];
+              a[p] = a[p + 1];
+              a[p + 1] = t;
+            }
+          }
+          if (S.dist === "few") {
+            var vals = [12, 34, 56, 78, 96];
+            for (i = 0; i < n; i++)
+              a[i] = vals[Math.floor(Math.random() * vals.length)];
+          }
+          return a;
+        }
+
+        function build() {
+          S.base = makeArray();
+          S.frames = Array.from(ALGOS[S.algo].gen(S.base.slice()));
+          buildBars();
+          resetRun(); // must run explicitly: seek(0) is a no-op when pos is already 0
+          render();
+          var scrub = document.getElementById("scrubRange");
+          scrub.max = String(Math.max(1, S.frames.length));
+          scrub.value = "0";
+          renderPanel();
+        }
+
+        function buildBars() {
+          var stage = document.getElementById("stage");
+          bars.forEach(function (b) {
+            b.remove();
+          });
+          bars = [];
+          for (var i = 0; i < S.size; i++) {
+            var b = document.createElement("div");
+            b.className = "bar";
+            stage.appendChild(b);
+            bars.push(b);
+          }
+        }
+
+        function resetRun() {
+          S.arr = S.base.slice();
+          S.marks = new Array(S.size).fill("");
+          S.pos = 0;
+          S.cmp = [];
+          S.pivot = -1;
+          S.band = null;
+          S.c = 0;
+          S.s = 0;
+          S.w = 0;
+          S.last = null;
+        }
+
+        function applyFrame(f) {
+          S.last = f;
+          if (f.op === "cmp") {
+            S.c++;
+            S.cmp = [f.i, f.j];
+          } else if (f.op === "swap") {
+            S.s++;
+            var t = S.arr[f.i];
+            S.arr[f.i] = S.arr[f.j];
+            S.arr[f.j] = t;
+            S.cmp = [f.i, f.j];
+          } else if (f.op === "set") {
+            S.w++;
+            S.arr[f.i] = f.v;
+            S.cmp = [f.i];
+          } else if (f.op === "sorted") {
+            S.marks[f.i] = "sorted";
+          } else if (f.op === "part") {
+            if (S.marks[f.i] !== "sorted") S.marks[f.i] = "part";
+          } else if (f.op === "pivot") {
+            S.pivot = f.i;
+          } else if (f.op === "band") {
+            S.band = f.lo < 0 ? null : [f.lo, f.hi];
+          }
+        }
+
+        // Replay is cheap, so seeking backwards just rebuilds from the start.
+        function seek(target) {
+          target = Math.max(0, Math.min(S.frames.length, target));
+          if (target < S.pos) resetRun();
+          while (S.pos < target) {
+            applyFrame(S.frames[S.pos]);
+            S.pos++;
+          }
+          render();
+        }
+
+        function render() {
+          var max = 100;
+          for (var i = 0; i < bars.length; i++) {
+            var cls = "bar";
+            if (S.marks[i] === "sorted") cls += " sorted";
+            else if (S.marks[i] === "part") cls += " part";
+            if (i === S.pivot && S.marks[i] !== "sorted") cls = "bar pivot";
+            if (S.cmp.indexOf(i) !== -1 && S.marks[i] !== "sorted")
+              cls = "bar cmp";
+            if (bars[i].className !== cls) bars[i].className = cls;
+            var h = (S.arr[i] / max) * 100;
+            var hs = h.toFixed(2) + "%";
+            if (bars[i].style.height !== hs) bars[i].style.height = hs;
+          }
+          var band = document.getElementById("band");
+          if (S.band) {
+            var w = 100 / S.size;
+            band.style.display = "block";
+            band.style.left = S.band[0] * w + "%";
+            band.style.width = (S.band[1] - S.band[0] + 1) * w + "%";
+          } else {
+            band.style.display = "none";
+          }
+
+          document.getElementById("statCmp").textContent = S.c;
+          document.getElementById("statSwap").textContent = S.s;
+          document.getElementById("statWrite").textContent = S.w;
+          document.getElementById("statStep").textContent = S.pos;
+          document.getElementById("statStepK").textContent =
+            "of " + S.frames.length + " operations";
+          document.getElementById("scrubRange").value = String(S.pos);
+
+          var out = "\u00a0",
+            f = S.last;
+          if (f) {
+            if (f.op === "cmp")
+              out =
+                "compare  a[" +
+                f.i +
+                "]=" +
+                S.arr[f.i] +
+                "  vs  a[" +
+                f.j +
+                "]=" +
+                S.arr[f.j];
+            else if (f.op === "swap")
+              out = "swap     a[" + f.i + "]  <->  a[" + f.j + "]";
+            else if (f.op === "set") out = "write    a[" + f.i + "] = " + f.v;
+            else if (f.op === "sorted")
+              out = "lock     a[" + f.i + "] is in its final position";
+            else if (f.op === "part")
+              out = "order    a[" + f.i + "] joins an ordered run";
+            else if (f.op === "pivot")
+              out = "pivot    a[" + f.i + "] = " + S.arr[f.i];
+            else if (f.op === "band")
+              out = f.lo < 0 ? "done" : "range    [" + f.lo + ".." + f.hi + "]";
+            else out = "\u00a0";
+          }
+          if (S.pos >= S.frames.length && S.frames.length)
+            out =
+              "sorted in " +
+              S.c +
+              " comparisons, " +
+              S.s +
+              " swaps, " +
+              S.w +
+              " writes";
+          document.getElementById("readout").textContent = out;
+
+          document.getElementById("btnStepB").disabled = S.pos === 0;
+          document.getElementById("btnStepF").disabled =
+            S.pos >= S.frames.length;
+        }
+
+        /* ---------------- playback ---------------- */
+        var raf = null,
+          lastT = 0,
+          acc = 0;
+        function opsPerSecond() {
+          return 2 + Math.pow(S.speed / 100, 2.2) * 900;
+        }
+
+        function loop(t) {
+          if (!S.playing) return;
+          if (!lastT) lastT = t;
+          var dt = (t - lastT) / 1000;
+          lastT = t;
+          acc += dt * opsPerSecond();
+          var n = Math.floor(acc);
+          if (n > 0) {
+            acc -= n;
+            for (var k = 0; k < n && S.pos < S.frames.length; k++) {
+              applyFrame(S.frames[S.pos]);
+              S.pos++;
+            }
+            render();
+          }
+          if (S.pos >= S.frames.length) {
+            setPlaying(false);
+            return;
+          }
+          raf = requestAnimationFrame(loop);
+        }
+
+        function setPlaying(on) {
+          if (on && S.pos >= S.frames.length) seek(0);
+          S.playing = on;
+          document.getElementById("btnPlay").textContent = on
+            ? "Pause"
+            : "Play";
+          if (on) {
+            lastT = 0;
+            acc = 0;
+            raf = requestAnimationFrame(loop);
+          } else if (raf) {
+            cancelAnimationFrame(raf);
+            raf = null;
+          }
+        }
+
+        /* ---------------- chrome ---------------- */
+        function renderChips(hostId, obj, key, onPick) {
+          var host = document.getElementById(hostId);
+          host.textContent = "";
+          Object.keys(obj).forEach(function (k) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "btn";
+            b.textContent = typeof obj[k] === "string" ? obj[k] : obj[k].name;
+            b.setAttribute("aria-pressed", S[key] === k ? "true" : "false");
+            b.addEventListener("click", function () {
+              S[key] = k;
+              renderChips(hostId, obj, key, onPick);
+              onPick();
+            });
+            host.appendChild(b);
+          });
+        }
+
+        function renderPanel() {
+          var a = ALGOS[S.algo];
+          document.getElementById("algoName").textContent = a.name;
+          document.getElementById("algoBlurb").textContent = a.blurb;
+          document.getElementById("cxBest").textContent = a.best;
+          document.getElementById("cxAvg").textContent = a.avg;
+          document.getElementById("cxWorst").textContent = a.worst;
+          document.getElementById("cxSpace").textContent = a.space;
+          var st = document.getElementById("algoStable");
+          st.textContent = a.stable ? "stable" : "not stable";
+          st.className = "pill" + (a.stable ? " yes" : "");
+          Array.prototype.forEach.call(
+            document.querySelectorAll("#refBody tr"),
+            function (tr) {
+              tr.className = tr.dataset.algo === S.algo ? "on" : "";
+            },
+          );
+        }
+
+        function renderRef() {
+          var body = document.getElementById("refBody");
+          body.textContent = "";
+          Object.keys(ALGOS).forEach(function (k) {
+            var a = ALGOS[k],
+              tr = document.createElement("tr");
+            tr.dataset.algo = k;
+            [
+              [a.name, ""],
+              [a.best, "m"],
+              [a.avg, "m"],
+              [a.worst, "m"],
+              [a.space, "m"],
+              [a.stable ? "yes" : "no", "m"],
+              [a.wins, ""],
+            ].forEach(function (cell) {
+              var td = document.createElement("td");
+              td.textContent = cell[0];
+              if (cell[1]) td.className = cell[1];
+              tr.appendChild(td);
+            });
+            body.appendChild(tr);
+          });
+        }
+
+        function rebuild() {
+          setPlaying(false);
+          build();
+        }
+
+        document
+          .getElementById("btnPlay")
+          .addEventListener("click", function () {
+            setPlaying(!S.playing);
+          });
+        document
+          .getElementById("btnStepF")
+          .addEventListener("click", function () {
+            setPlaying(false);
+            seek(S.pos + 1);
+          });
+        document
+          .getElementById("btnStepB")
+          .addEventListener("click", function () {
+            setPlaying(false);
+            seek(S.pos - 1);
+          });
+        document
+          .getElementById("btnReset")
+          .addEventListener("click", function () {
+            setPlaying(false);
+            seek(0);
+          });
+        document
+          .getElementById("btnShuffle")
+          .addEventListener("click", rebuild);
+        document
+          .getElementById("scrubRange")
+          .addEventListener("input", function (e) {
+            setPlaying(false);
+            seek(parseInt(e.target.value, 10));
+          });
+        document
+          .getElementById("sizeRange")
+          .addEventListener("input", function (e) {
+            S.size = parseInt(e.target.value, 10);
+            document.getElementById("sizeNum").textContent = S.size;
+            rebuild();
+          });
+        document
+          .getElementById("speedRange")
+          .addEventListener("input", function (e) {
+            S.speed = parseInt(e.target.value, 10);
+            document.getElementById("speedNum").textContent = S.speed;
+          });
+        document.addEventListener("keydown", function (e) {
+          if (e.target && e.target.tagName === "INPUT") return;
+          if (e.key === " ") {
+            e.preventDefault();
+            setPlaying(!S.playing);
+          } else if (e.key === "ArrowRight") {
+            setPlaying(false);
+            seek(S.pos + 1);
+          } else if (e.key === "ArrowLeft") {
+            setPlaying(false);
+            seek(S.pos - 1);
+          }
+        });
+
+        renderChips("algoGroup", ALGOS, "algo", rebuild);
+        renderChips("distGroup", DISTS, "dist", rebuild);
+        renderRef();
+        build();
+      })();
+    </script>
+  </body>
+</html>
