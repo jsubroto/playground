@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Float lab: IEEE 754 bits, decoded</title>
+    <style>
+      :root {
+        --artifact-background: #ffffff;
+        --artifact-background-light: #f1f3f6;
+        --artifact-background-mid: #e9ecf1;
+        --artifact-border-light: #e3e6ec;
+        --artifact-border-dark: #cdd2db;
+        --artifact-primary-brand: #3559e6;
+        --artifact-primary-highlight: #0d0f14;
+        --artifact-primary-hover: #2442b8;
+        --artifact-selected: #eaeefc;
+        --artifact-text-primary: #11141a;
+        --artifact-text-secondary: #5c6470;
+        --artifact-text-highlight: #e8eefc;
+        --artifact-negative: #dc4c4c;
+        --artifact-on-brand-text: #ffffff;
+        --artifact-zero-text: #8b929d;
+        --artifact-sign: #c7432e;
+        --artifact-exponent: #11805a;
+        --artifact-mantissa: #3559e6;
+      }
+      html[data-theme="dark"] {
+        --artifact-background: #0a0b0e;
+        --artifact-background-light: #121419;
+        --artifact-background-mid: #181b22;
+        --artifact-border-light: #23262e;
+        --artifact-border-dark: #343844;
+        --artifact-primary-brand: #6a92ff;
+        --artifact-primary-highlight: #f5f7fb;
+        --artifact-primary-hover: #88a8ff;
+        --artifact-selected: #1a2030;
+        --artifact-text-primary: #eef0f4;
+        --artifact-text-secondary: #9aa0ad;
+        --artifact-text-highlight: #14213d;
+        --artifact-negative: #ff6b6b;
+        --artifact-on-brand-text: #0a0b0e;
+        --artifact-zero-text: #6d7480;
+        --artifact-sign: #ff8a6b;
+        --artifact-exponent: #46d39a;
+        --artifact-mantissa: #6a92ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--artifact-background);
+        color: var(--artifact-text-primary);
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        letter-spacing: -0.005em;
+      }
+      .shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 64px 28px 96px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-weight: 400;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin: 0;
+        color: var(--artifact-text-primary);
+      }
+      h1 {
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        font-weight: 300;
+      }
+      h2 {
+        font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+      }
+      p {
+        color: var(--artifact-text-secondary);
+      }
+      .eyebrow,
+      .field-label {
+        font-family:
+          "SF Mono", "IBM Plex Mono", "Cascadia Code", "Consolas", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+      }
+      .mono,
+      code {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 13px;
+      }
+      .lede {
+        max-width: 58ch;
+        font-size: 1.0625rem;
+        margin: 20px 0 0;
+      }
+      .lede a {
+        color: var(--artifact-primary-brand);
+      }
+
+      /* ---------- reveal ---------- */
+      .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      section {
+        margin-top: 84px;
+      }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--artifact-border-light);
+        padding-bottom: 18px;
+      }
+      .sec-head p {
+        margin: 6px 0 0;
+        max-width: 62ch;
+      }
+
+      /* ---------- controls ---------- */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin: 28px 0 8px;
+      }
+      input[type="text"] {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 16px;
+        padding: 11px 14px;
+        min-width: 260px;
+        flex: 1 1 260px;
+        background: var(--artifact-background-light);
+        color: var(--artifact-text-primary);
+        border: 1px solid var(--artifact-border-dark);
+        border-radius: 6px;
+        outline: none;
+      }
+      input[type="text"]:focus {
+        border-color: var(--artifact-primary-brand);
+        background: var(--artifact-background);
+      }
+      input[type="text"][aria-invalid="true"] {
+        border-color: var(--artifact-negative);
+      }
+      .btn {
+        font-family: "SF Mono", "IBM Plex Mono", "Consolas", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 11px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        background: var(--artifact-background-light);
+        color: var(--artifact-text-primary);
+        border: 1px solid var(--artifact-border-dark);
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .btn:hover {
+        background: var(--artifact-selected);
+        border-color: var(--artifact-primary-brand);
+        color: var(--artifact-text-primary);
+      }
+      .btn[aria-pressed="true"] {
+        background: var(--artifact-primary-brand);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--artifact-primary-brand);
+      }
+      .seg {
+        display: flex;
+        gap: 6px;
+      }
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-top: 22px;
+      }
+      .presets .field-label {
+        margin-right: 6px;
+      }
+
+      /* ---------- bits ---------- */
+      .fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-top: 26px;
+      }
+      .field {
+        border-top: 3px solid var(--field-color);
+        padding-top: 10px;
+      }
+      .field.sign {
+        --field-color: var(--artifact-sign);
+      }
+      .field.exponent {
+        --field-color: var(--artifact-exponent);
+      }
+      .field.mantissa {
+        --field-color: var(--artifact-mantissa);
+      }
+      .field-name {
+        font-family: "SF Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--field-color);
+        margin-bottom: 10px;
+        white-space: nowrap;
+      }
+      .field-bits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+      }
+      .bit-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .bit {
+        width: 26px;
+        height: 36px;
+        padding: 0;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: "SF Mono", "IBM Plex Mono", monospace;
+        font-size: 15px;
+        font-weight: 500;
+        background: var(--artifact-background);
+        color: var(--artifact-zero-text);
+        border: 1px solid var(--artifact-border-dark);
+        transition:
+          background 0.12s,
+          color 0.12s,
+          border-color 0.12s,
+          transform 0.12s;
+      }
+      .bit:hover {
+        border-color: var(--field-color);
+        transform: translateY(-2px);
+      }
+      .bit[aria-pressed="true"] {
+        background: var(--field-color);
+        color: var(--artifact-on-brand-text);
+        border-color: var(--field-color);
+      }
+      .bit:focus-visible {
+        outline: 2px solid var(--field-color);
+        outline-offset: 2px;
+      }
+      .place {
+        font-family: "SF Mono", monospace;
+        font-size: 9.5px;
+        color: var(--artifact-text-secondary);
+      }
+
+      /* ---------- readouts ---------- */
+      .stream {
+        margin-top: 26px;
+        padding: 18px 20px;
+        border-radius: 8px;
+        background: var(--artifact-background-mid);
+        border: 1px solid var(--artifact-border-light);
+        display: grid;
+        gap: 12px;
+      }
+      .stream .row {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+      .stream .val {
+        font-family: "SF Mono", monospace;
+        font-size: 13px;
+        word-break: break-all;
+        color: var(--artifact-text-primary);
+      }
+      .hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13.5px;
+        color: var(--artifact-text-secondary);
+        margin-top: 18px;
+      }
+      .hint .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--artifact-primary-brand);
+        flex: 0 0 auto;
+      }
+      .breakdown {
+        margin-top: 26px;
+        background: var(--artifact-background-light);
+        border: 1px solid var(--artifact-border-light);
+        border-radius: 8px;
+        padding: 22px 22px 18px;
+        display: grid;
+        gap: 14px;
+      }
+      .breakdown .row {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+      .breakdown .val {
+        font-family: "SF Mono", monospace;
+        font-size: 13px;
+        word-break: break-all;
+        color: var(--artifact-text-primary);
+      }
+      .breakdown .row.sign .field-label {
+        color: var(--artifact-sign);
+      }
+      .breakdown .row.exponent .field-label {
+        color: var(--artifact-exponent);
+      }
+      .breakdown .row.mantissa .field-label {
+        color: var(--artifact-mantissa);
+      }
+      .breakdown .row.result {
+        border-top: 1px solid var(--artifact-border-light);
+        padding-top: 14px;
+      }
+      .kind {
+        display: inline-block;
+        font-family: "SF Mono", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: 4px;
+        border: 1px solid var(--artifact-border-dark);
+        background: var(--artifact-background);
+        color: var(--artifact-text-primary);
+      }
+      .back {
+        display: inline-block;
+        font-family: "SF Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--artifact-text-secondary);
+        text-decoration: none;
+        margin-bottom: 26px;
+      }
+      .back:hover {
+        color: var(--artifact-primary-brand);
+      }
+      .footer {
+        margin-top: 84px;
+        padding-top: 22px;
+        border-top: 1px solid var(--artifact-border-light);
+        font-size: 13.5px;
+        color: var(--artifact-text-secondary);
+      }
+
+      @media (max-width: 620px) {
+        .shell {
+          padding: 40px 18px 72px;
+        }
+        .bit {
+          width: 22px;
+          height: 32px;
+          font-size: 13px;
+        }
+        .stream .row,
+        .breakdown .row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+      }
+
+      @media print {
+        @page {
+          size: auto !important;
+        }
+        body {
+          margin: 0;
+          padding: 0.4in 0.6in;
+          background: #fff;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .shell {
+          max-width: 100% !important;
+          width: 100% !important;
+          padding: 0 !important;
+        }
+        section {
+          margin-top: 28px !important;
+          break-inside: avoid;
+        }
+        .stream,
+        .breakdown,
+        .fields {
+          break-inside: avoid;
+          box-shadow: none !important;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .controls,
+        .presets {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <a class="back" href="../">&larr; playground</a>
+
+      <header class="reveal" style="animation-delay: 0.05s">
+        <div class="eyebrow">Interactive &middot; IEEE 754 floating point</div>
+        <h1 style="margin-top: 18px">Where 0.1<br />actually lives.</h1>
+        <p class="lede">
+          Type a number to see the bits a computer really stores: a sign, an
+          exponent and a mantissa. Flip any bit, step to the neighbouring float,
+          and measure exactly how far the stored value sits from the one you
+          typed.
+          New to bits? Start with the <a href="../bitwise/">Bitwise lab</a>.
+        </p>
+      </header>
+
+      <!-- ============ SECTION 1 ============ -->
+      <section class="reveal" style="animation-delay: 0.18s">
+        <div class="sec-head">
+          <h2>01 &nbsp;Decimal &harr; bits</h2>
+          <p>
+            Whatever you type is rounded to the nearest float. Click any bit to
+            flip it and the decimal follows. Sign, exponent and mantissa are
+            coloured separately.
+          </p>
+        </div>
+
+        <div class="controls">
+          <input
+            type="text"
+            id="decimal"
+            value="0.1"
+            maxlength="1200"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Decimal number"
+          />
+          <div class="seg" role="group" aria-label="Format">
+            <button class="btn" id="fmt32" type="button">32-bit</button>
+            <button class="btn" id="fmt64" type="button">64-bit</button>
+          </div>
+          <button class="btn" id="btnDown" type="button">Next down</button>
+          <button class="btn" id="btnUp" type="button">Next up</button>
+        </div>
+
+        <div class="fields" id="fields"></div>
+
+        <div class="stream">
+          <div class="row">
+            <div class="field-label">Hex</div>
+            <div class="val" id="outHex"></div>
+          </div>
+          <div class="row">
+            <div class="field-label">Binary</div>
+            <div class="val" id="outBin"></div>
+          </div>
+          <div class="row">
+            <div class="field-label">Stored exactly</div>
+            <div class="val" id="outExact"></div>
+          </div>
+          <div class="row">
+            <div class="field-label">Shortest form</div>
+            <div class="val" id="outShort"></div>
+          </div>
+          <div class="row">
+            <div class="field-label">Rounding error</div>
+            <div class="val" id="outError"></div>
+          </div>
+        </div>
+
+        <div class="presets" id="presets">
+          <span class="field-label">Try</span>
+        </div>
+
+        <div class="hint">
+          <span class="dot"></span>
+          <span id="sumHint"></span>
+        </div>
+      </section>
+
+      <!-- ============ SECTION 2 ============ -->
+      <section class="reveal" style="animation-delay: 0.3s">
+        <div class="sec-head">
+          <h2>02 &nbsp;Reading the bits</h2>
+          <p>
+            The same pattern, decoded field by field. A float is a sign, a power
+            of two and a significand multiplied together, and every value it
+            can hold is an exact binary fraction.
+          </p>
+        </div>
+
+        <div class="breakdown" id="breakdown"></div>
+      </section>
+
+      <div class="footer">
+        Bits follow IEEE 754 binary32 and binary64, most significant bit first.
+        Decimal input is rounded to the nearest float, ties to even, using exact
+        BigInt arithmetic.
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        /* ---------- core ---------- */
+        var FORMATS = {
+          32: { bits: 32, expBits: 8, fracBits: 23, bias: 127 },
+          64: { bits: 64, expBits: 11, fracBits: 52, bias: 1023 },
+        };
+        var DECIMAL = /^([+-]?)(\d*)(?:\.(\d*))?(?:e([+-]?\d+))?$/i;
+        var SPECIAL = /^([+-]?)(inf|infinity|nan)$/i;
+        var view = new DataView(new ArrayBuffer(8));
+
+        function mask(n) {
+          return (1n << BigInt(n)) - 1n;
+        }
+        function expAll(f) {
+          return Number(mask(f.expBits));
+        }
+        function fields(bits, f) {
+          return {
+            sign: Number(bits >> BigInt(f.bits - 1)),
+            exp: Number((bits >> BigInt(f.fracBits)) & mask(f.expBits)),
+            frac: bits & mask(f.fracBits),
+          };
+        }
+        function pack(sign, exp, frac, f) {
+          return (
+            (BigInt(sign) << BigInt(f.bits - 1)) |
+            (BigInt(exp) << BigInt(f.fracBits)) |
+            frac
+          );
+        }
+        function kindOf(x, f) {
+          if (x.exp === expAll(f)) return x.frac === 0n ? "Infinity" : "NaN";
+          if (x.exp === 0) return x.frac === 0n ? "Zero" : "Subnormal";
+          return "Normal";
+        }
+
+        function toNumber(bits, f) {
+          if (f.bits === 32) {
+            view.setUint32(0, Number(bits));
+            return view.getFloat32(0);
+          }
+          view.setBigUint64(0, bits);
+          return view.getFloat64(0);
+        }
+        function fromNumber(v, f) {
+          if (f.bits === 32) {
+            view.setFloat32(0, v);
+            return BigInt(view.getUint32(0));
+          }
+          view.setFloat64(0, v);
+          return view.getBigUint64(0);
+        }
+
+        // A finite decimal comes back as sign, digits n and exponent q: n * 10^q.
+        function parseDecimal(text) {
+          var s = text.trim();
+          var special = SPECIAL.exec(s);
+          if (special)
+            return {
+              sign: special[1] === "-" ? 1 : 0,
+              kind: special[2].toLowerCase() === "nan" ? "nan" : "inf",
+            };
+          var m = DECIMAL.exec(s);
+          var frac = m ? m[3] || "" : "";
+          if (!m || m[2] + frac === "") return null;
+          var digits = (m[2] + frac).replace(/^0+/, "");
+          return {
+            sign: m[1] === "-" ? 1 : 0,
+            kind: "finite",
+            n: BigInt(digits || "0"),
+            q: Number(m[4] || 0) - frac.length,
+            length: digits.length,
+          };
+        }
+
+        function atLeastPow2(num, den, e) {
+          return e >= 0 ? num >= den << BigInt(e) : num << BigInt(-e) >= den;
+        }
+
+        function roundToFloat(d, f) {
+          var inf = pack(d.sign, expAll(f), 0n, f);
+          if (d.kind === "nan")
+            return pack(d.sign, expAll(f), 1n << BigInt(f.fracBits - 1), f);
+          if (d.kind === "inf") return inf;
+          var magnitude = d.q + d.length - 1;
+          if (d.n === 0n || magnitude < -350) return pack(d.sign, 0, 0n, f);
+          if (magnitude > 310) return inf;
+
+          var num = d.q >= 0 ? d.n * 10n ** BigInt(d.q) : d.n;
+          var den = d.q >= 0 ? 1n : 10n ** BigInt(-d.q);
+          var e = num.toString(2).length - den.toString(2).length;
+          if (!atLeastPow2(num, den, e)) e--;
+          e = Math.max(e, 1 - f.bias);
+
+          // Scale so the significand is an integer of fracBits + 1 bits, then
+          // round to nearest with ties going to the even neighbour.
+          var shift = f.fracBits - e;
+          var a = shift >= 0 ? num << BigInt(shift) : num;
+          var b = shift >= 0 ? den : den << BigInt(-shift);
+          var sig = a / b;
+          var rem = a % b;
+          if (2n * rem > b || (2n * rem === b && (sig & 1n) === 1n)) sig++;
+
+          var hidden = 1n << BigInt(f.fracBits);
+          if (sig === hidden * 2n) {
+            sig = hidden;
+            e++;
+          }
+          if (sig < hidden) return pack(d.sign, 0, sig, f);
+          if (e + f.bias >= expAll(f)) return inf;
+          return pack(d.sign, e + f.bias, sig - hidden, f);
+        }
+
+        function nearest(text, f) {
+          return roundToFloat(parseDecimal(text), f);
+        }
+
+        // Every finite float is m * 2^e exactly, written here as n / 10^k.
+        function exact(x, f) {
+          var m = x.exp === 0 ? x.frac : x.frac + (1n << BigInt(f.fracBits));
+          var e = (x.exp === 0 ? 1 : x.exp) - f.bias - f.fracBits;
+          if (e >= 0) return { n: m << BigInt(e), k: 0 };
+          return { n: m * 5n ** BigInt(-e), k: -e };
+        }
+
+        function decString(n, k) {
+          var s = n.toString();
+          if (k === 0) return s;
+          s = s.padStart(k + 1, "0");
+          return (s.slice(0, -k) + "." + s.slice(-k)).replace(/\.?0+$/, "");
+        }
+
+        function shortest(bits, f) {
+          var x = fields(bits, f);
+          var v = toNumber(bits, f);
+          if (v !== v) return "NaN";
+          if (v === 0) return x.sign ? "-0" : "0";
+          if (f.bits === 64) return String(v);
+          for (var p = 1; p <= 9; p++) {
+            var s = String(Number(v.toPrecision(p)));
+            if (nearest(s, f) === bits) return s;
+          }
+          return String(v);
+        }
+
+        function step(bits, f, dir) {
+          var x = fields(bits, f);
+          var kind = kindOf(x, f);
+          if (kind === "NaN") return bits;
+          if (kind === "Zero") return pack(dir > 0 ? 0 : 1, 0, 1n, f);
+          var awayFromZero = dir > 0 !== (x.sign === 1);
+          if (!awayFromZero) return bits - 1n;
+          if (kind === "Infinity") return bits;
+          return bits + 1n;
+        }
+
+        /* ---------- ui ---------- */
+        var state = { format: 32, bits: 0n, typed: null };
+        var bitButtons = [];
+        var input = document.getElementById("decimal");
+
+        function fmt() {
+          return FORMATS[state.format];
+        }
+        function signedInt(n) {
+          return n < 0 ? "−" + -n : String(n);
+        }
+        function binary(value, width) {
+          return value.toString(2).padStart(width, "0");
+        }
+
+        function buildFields() {
+          var f = fmt();
+          var host = document.getElementById("fields");
+          host.textContent = "";
+          bitButtons = [];
+          var pos = f.bits - 1;
+          [
+            { name: "Sign", cls: "sign", count: 1 },
+            { name: "Exponent", cls: "exponent", count: f.expBits },
+            { name: "Mantissa", cls: "mantissa", count: f.fracBits },
+          ].forEach(function (group) {
+            var field = document.createElement("div");
+            field.className = "field " + group.cls;
+            var name = document.createElement("div");
+            name.className = "field-name";
+            name.textContent =
+              group.name +
+              " · " +
+              group.count +
+              (group.count === 1 ? " bit" : " bits");
+            var row = document.createElement("div");
+            row.className = "field-bits";
+            for (var i = 0; i < group.count; i++) {
+              row.appendChild(makeBit(pos, group.name.toLowerCase()));
+              pos--;
+            }
+            field.appendChild(name);
+            field.appendChild(row);
+            host.appendChild(field);
+          });
+        }
+
+        function makeBit(pos, groupName) {
+          var col = document.createElement("div");
+          col.className = "bit-col";
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "bit";
+          btn.setAttribute("aria-label", "bit " + pos + ", " + groupName);
+          btn.addEventListener("click", function () {
+            state.bits ^= 1n << BigInt(pos);
+            commitBits();
+          });
+          var place = document.createElement("div");
+          place.className = "place";
+          place.textContent = pos;
+          col.appendChild(btn);
+          col.appendChild(place);
+          bitButtons.push({ btn: btn, pos: BigInt(pos) });
+          return col;
+        }
+
+        function row(host, cls, label, value) {
+          var r = document.createElement("div");
+          r.className = "row " + cls;
+          var l = document.createElement("div");
+          l.className = "field-label";
+          l.textContent = label;
+          var v = document.createElement("div");
+          v.className = "val";
+          if (typeof value === "string") v.textContent = value;
+          else v.appendChild(value);
+          r.appendChild(l);
+          r.appendChild(v);
+          host.appendChild(r);
+        }
+
+        function power(base, exp) {
+          var span = document.createElement("span");
+          span.appendChild(document.createTextNode(base));
+          var sup = document.createElement("sup");
+          sup.textContent = exp;
+          span.appendChild(sup);
+          return span;
+        }
+
+        function exactText(x, f) {
+          var kind = kindOf(x, f);
+          var sign = x.sign ? "-" : "";
+          if (kind === "NaN") return "NaN";
+          if (kind === "Infinity") return sign + "Infinity";
+          var v = exact(x, f);
+          return sign + decString(v.n, v.k);
+        }
+
+        function errorText(x, f) {
+          var d = state.typed;
+          if (!d || d.kind !== "finite") return "Not applicable";
+          if (kindOf(x, f) === "Infinity")
+            return "Too large for " + f.bits + "-bit, stored as Infinity";
+          var stored = exact(x, f);
+          var typed =
+            d.q >= 0
+              ? { n: d.n * 10n ** BigInt(d.q), k: 0 }
+              : { n: d.n, k: -d.q };
+          var k = Math.max(stored.k, typed.k);
+          var diff =
+            (x.sign ? -1n : 1n) * stored.n * 10n ** BigInt(k - stored.k) -
+            (d.sign ? -1n : 1n) * typed.n * 10n ** BigInt(k - typed.k);
+          if (diff === 0n) return "0, stored exactly";
+          var digits = (diff < 0n ? -diff : diff).toString();
+          var lead = (digits[0] + "." + digits.slice(1, 4)).replace(
+            /\.?0*$/,
+            "",
+          );
+          return (
+            "≈ " +
+            (diff < 0n ? "−" : "+") +
+            lead +
+            "e" +
+            (digits.length - 1 - k) +
+            " (stored minus typed)"
+          );
+        }
+
+        function renderBreakdown(x, f) {
+          var host = document.getElementById("breakdown");
+          host.textContent = "";
+          var kind = kindOf(x, f);
+          var expText = binary(x.exp, f.expBits) + " = " + x.exp;
+          var fracText = binary(x.frac, f.fracBits);
+          var minExp = 1 - f.bias;
+
+          var badge = document.createElement("span");
+          badge.className = "kind";
+          badge.textContent = kind;
+          row(host, "", "Kind", badge);
+          row(
+            host,
+            "sign",
+            "Sign",
+            x.sign + ", so the value is " + (x.sign ? "negative" : "positive"),
+          );
+
+          if (kind === "Normal") {
+            row(
+              host,
+              "exponent",
+              "Exponent",
+              expText +
+                ", minus the bias of " +
+                f.bias +
+                " gives " +
+                signedInt(x.exp - f.bias),
+            );
+          } else if (kind === "Subnormal" || kind === "Zero") {
+            row(
+              host,
+              "exponent",
+              "Exponent",
+              expText +
+                ", all zeros. The exponent is fixed at 1 − " +
+                f.bias +
+                " = " +
+                signedInt(minExp) +
+                " and there is no hidden leading 1",
+            );
+          } else {
+            row(
+              host,
+              "exponent",
+              "Exponent",
+              expText + ", all ones, reserved for Infinity and NaN",
+            );
+          }
+
+          if (kind === "Infinity" || kind === "NaN") {
+            row(
+              host,
+              "mantissa",
+              "Mantissa",
+              fracText +
+                (kind === "NaN"
+                  ? ", not zero, so this is NaN"
+                  : ", all zeros, so this is Infinity"),
+            );
+            row(host, "result", "Value", exactText(x, f));
+            return;
+          }
+
+          var lead = kind === "Normal" ? 1n : 0n;
+          var sig = (lead << BigInt(f.fracBits)) | x.frac;
+          var sigText = decString(sig * 5n ** BigInt(f.fracBits), f.fracBits);
+          row(
+            host,
+            "mantissa",
+            "Significand",
+            lead + "." + fracText + " in binary = " + sigText,
+          );
+
+          var formula = document.createElement("span");
+          formula.appendChild(power("(−1)", String(x.sign)));
+          formula.appendChild(
+            power(
+              " × 2",
+              signedInt(kind === "Normal" ? x.exp - f.bias : minExp),
+            ),
+          );
+          formula.appendChild(
+            document.createTextNode(
+              " × " + sigText + " = " + exactText(x, f),
+            ),
+          );
+          row(host, "result", "Value", formula);
+        }
+
+        function renderSumHint(f) {
+          var sum = fromNumber(
+            toNumber(nearest("0.1", f), f) + toNumber(nearest("0.2", f), f),
+            f,
+          );
+          var steps = Number(sum - nearest("0.3", f));
+          var where =
+            steps === 0
+              ? "lands exactly on the float nearest 0.3, so they compare equal."
+              : "lands " +
+                Math.abs(steps) +
+                (Math.abs(steps) === 1 ? " float " : " floats ") +
+                (steps > 0 ? "above" : "below") +
+                " the one nearest 0.3, so they compare unequal.";
+          document.getElementById("sumHint").textContent =
+            "In " + f.bits + "-bit, 0.1 + 0.2 " + where;
+        }
+
+        function render() {
+          var f = fmt();
+          var x = fields(state.bits, f);
+          bitButtons.forEach(function (b) {
+            var on = ((state.bits >> b.pos) & 1n) === 1n;
+            b.btn.setAttribute("aria-pressed", on ? "true" : "false");
+            b.btn.textContent = on ? "1" : "0";
+          });
+          document.getElementById("fmt32").setAttribute(
+            "aria-pressed",
+            state.format === 32 ? "true" : "false",
+          );
+          document.getElementById("fmt64").setAttribute(
+            "aria-pressed",
+            state.format === 64 ? "true" : "false",
+          );
+          document.getElementById("outHex").textContent =
+            "0x" +
+            state.bits
+              .toString(16)
+              .toUpperCase()
+              .padStart(f.bits / 4, "0");
+          document.getElementById("outBin").textContent =
+            x.sign +
+            " " +
+            binary(x.exp, f.expBits) +
+            " " +
+            binary(x.frac, f.fracBits);
+          document.getElementById("outExact").textContent = exactText(x, f);
+          document.getElementById("outShort").textContent = shortest(
+            state.bits,
+            f,
+          );
+          document.getElementById("outError").textContent = errorText(x, f);
+          renderBreakdown(x, f);
+          renderSumHint(f);
+        }
+
+        // After a bit-level change, show the shortest decimal that maps back to
+        // these exact bits, and measure the rounding error against that.
+        function commitBits() {
+          input.value = shortest(state.bits, fmt());
+          input.removeAttribute("aria-invalid");
+          state.typed = parseDecimal(input.value);
+          render();
+        }
+
+        function setFormat(n) {
+          var from = fmt();
+          var d = parseDecimal(input.value);
+          state.format = n;
+          buildFields();
+          if (d) {
+            state.bits = roundToFloat(d, fmt());
+            state.typed = d;
+            render();
+          } else {
+            state.bits = fromNumber(toNumber(state.bits, from), fmt());
+            commitBits();
+          }
+        }
+
+        var PRESETS = [
+          { label: "0.1", text: "0.1" },
+          {
+            label: "0.1 + 0.2",
+            bits: function (f) {
+              return fromNumber(
+                toNumber(nearest("0.1", f), f) +
+                  toNumber(nearest("0.2", f), f),
+                f,
+              );
+            },
+          },
+          { label: "1", text: "1" },
+          {
+            label: "Largest",
+            bits: function (f) {
+              return pack(0, expAll(f) - 1, mask(f.fracBits), f);
+            },
+          },
+          {
+            label: "Smallest normal",
+            bits: function (f) {
+              return pack(0, 1, 0n, f);
+            },
+          },
+          {
+            label: "Smallest subnormal",
+            bits: function (f) {
+              return pack(0, 0, 1n, f);
+            },
+          },
+          { label: "+0", text: "0" },
+          { label: "−0", text: "-0" },
+          { label: "+∞", text: "Infinity" },
+          { label: "−∞", text: "-Infinity" },
+          { label: "NaN", text: "NaN" },
+        ];
+
+        var presetHost = document.getElementById("presets");
+        PRESETS.forEach(function (p) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn";
+          btn.textContent = p.label;
+          btn.addEventListener("click", function () {
+            state.bits = p.text ? nearest(p.text, fmt()) : p.bits(fmt());
+            commitBits();
+          });
+          presetHost.appendChild(btn);
+        });
+
+        input.addEventListener("input", function () {
+          var d = parseDecimal(input.value);
+          if (!d) {
+            input.setAttribute("aria-invalid", "true");
+            return;
+          }
+          input.removeAttribute("aria-invalid");
+          state.bits = roundToFloat(d, fmt());
+          state.typed = d;
+          render();
+        });
+        document.getElementById("fmt32").addEventListener("click", function () {
+          if (state.format !== 32) setFormat(32);
+        });
+        document.getElementById("fmt64").addEventListener("click", function () {
+          if (state.format !== 64) setFormat(64);
+        });
+        document.getElementById("btnDown").addEventListener("click", function () {
+          state.bits = step(state.bits, fmt(), -1);
+          commitBits();
+        });
+        document.getElementById("btnUp").addEventListener("click", function () {
+          state.bits = step(state.bits, fmt(), 1);
+          commitBits();
+        });
+
+        state.typed = parseDecimal(input.value);
+        state.bits = roundToFloat(state.typed, fmt());
+        buildFields();
+        render();
+      })();
+    </script>
+  </body>
+</html>

@@ -54,11 +54,24 @@ A 3D platformer in a single HTML file. Hop across a floating path, collect gems,
 
 One level of about 20 platforms, including a sliding platform, an elevator and a narrow beam, with 24 gems and 2 checkpoints. Keyboard only, so it loads on phones but can't be played there.
 
+### Float lab (`float/`)
+
+IEEE 754 floating point, bit by bit, in 32-bit and 64-bit.
+
+- Type a decimal and it's rounded to the nearest float, or click any bit to flip it and the decimal follows
+- Sign, exponent and mantissa are coloured separately, with hex and grouped binary readouts
+- The exact value stored, the shortest decimal that maps back to the same bits, and the rounding error against what you typed
+- Next up and next down step to the neighbouring float
+- Presets for 0.1, 0.1 + 0.2, the largest float, the smallest normal and subnormal, ±0, ±Infinity and NaN
+- A field by field breakdown: bias, hidden leading 1, subnormals, and the formula that turns the bits into the value
+
+Decimal input is converted with exact BigInt arithmetic rather than JavaScript's own parser, so 32-bit results are rounded once, straight from the decimal, instead of passing through a 64-bit value first. A hint under the presets works out live whether 0.1 + 0.2 lands on the float nearest 0.3: it does in 32-bit and misses by one float in 64-bit.
+
 ## Running locally
 
 Open `index.html` in a browser. That is the whole setup.
 
-One caveat: the landing page links to `./bitwise/`, `./sorting/` and `./skyhop/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
+One caveat: the landing page links to `./bitwise/`, `./sorting/`, `./skyhop/` and `./float/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
 
 ```bash
 python3 -m http.server 8000
@@ -90,6 +103,8 @@ No Actions workflow and no `.nojekyll` file are needed. Jekyll passes plain HTML
 │   ├── index.html
 │   ├── three.module.min.js   vendored Three.js r186
 │   └── three.core.js         imported by three.module.min.js
+├── float/
+│   └── index.html
 └── README.md
 ```
 
