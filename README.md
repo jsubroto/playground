@@ -69,7 +69,7 @@ Decimal input is converted with exact BigInt arithmetic rather than JavaScript's
 
 ### Sound lab (`sound/`)
 
-The Web Audio behind Skyhop's sound effects, in two parts.
+The Web Audio behind Skyhop's sound effects, in three parts.
 
 `beep()` playground:
 
@@ -83,6 +83,13 @@ Waveform types:
 - One card per `OscillatorNode.type`: sine, square, sawtooth and triangle, each with its waveform drawn over two periods
 - Slow motion mode runs the oscillator below hearing range and uses it to bend the pitch of a sine tone, so you hear the shape as movement while a dot tracks it on the graph
 - Tone mode plays the oscillator directly, so the shape comes through as tone colour instead
+
+Overtones:
+
+- Pick triangle, square or sawtooth and add up to 15 overtones with a slider, watching the sum of sines close in on the perfect shape
+- Each overtone is drawn on its own, with a bar chart of how loud it is next to the main pitch
+- Shows why the shapes sound different: triangle and square use only odd overtones, sawtooth uses all of them, and triangle's fade far faster than the other two
+- The square wave's corner ripples get narrower as overtones are added but stay the same height, which is the Gibbs phenomenon
 
 ### Trig lab (`trig/`)
 
