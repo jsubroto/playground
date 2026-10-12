@@ -67,11 +67,28 @@ IEEE 754 floating point, bit by bit, in 32-bit and 64-bit.
 
 Decimal input is converted with exact BigInt arithmetic rather than JavaScript's own parser, so 32-bit results are rounded once, straight from the decimal, instead of passing through a 64-bit value first. A hint under the presets works out live whether 0.1 + 0.2 lands on the float nearest 0.3: it does in 32-bit and misses by one float in 64-bit.
 
+### Sound lab (`sound/`)
+
+The Web Audio behind Skyhop's sound effects, in two parts.
+
+`beep()` playground:
+
+- Sliders for each argument of the `beep()` function Skyhop uses: starting pitch, length, waveform, volume and pitch slide
+- A graph of pitch and volume over the length of the sound, and the exact `beep(...)` call, both updating as you move the sliders
+- Every Skyhop sound as a preset, including the multi-note gem, checkpoint and win sounds
+- Space plays the current sound
+
+Waveform types:
+
+- One card per `OscillatorNode.type`: sine, square, sawtooth and triangle, each with its waveform drawn over two periods
+- Slow motion mode runs the oscillator below hearing range and uses it to bend the pitch of a sine tone, so you hear the shape as movement while a dot tracks it on the graph
+- Tone mode plays the oscillator directly, so the shape comes through as tone colour instead
+
 ## Running locally
 
 Open `index.html` in a browser. That is the whole setup.
 
-One caveat: the landing page links to `./bitwise/`, `./sorting/`, `./skyhop/` and `./float/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
+One caveat: the landing page links to `./bitwise/`, `./sorting/`, `./skyhop/`, `./float/` and `./sound/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
 
 ```bash
 python3 -m http.server 8000
@@ -104,6 +121,8 @@ No Actions workflow and no `.nojekyll` file are needed. Jekyll passes plain HTML
 │   ├── three.module.min.js   vendored Three.js r186
 │   └── three.core.js         imported by three.module.min.js
 ├── float/
+│   └── index.html
+├── sound/
 │   └── index.html
 └── README.md
 ```
