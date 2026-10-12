@@ -84,11 +84,22 @@ Waveform types:
 - Slow motion mode runs the oscillator below hearing range and uses it to bend the pitch of a sine tone, so you hear the shape as movement while a dot tracks it on the graph
 - Tone mode plays the oscillator directly, so the shape comes through as tone colour instead
 
+### Trig lab (`trig/`)
+
+Sin, cos and tan on the unit circle, aimed at programmers.
+
+- Drag the point, click the circle, use the arrow keys (Shift for 15° steps), scrub the slider, or press Play
+- cos and sin drawn as the legs of the triangle and tan as the line out to x = 1, each with a signed bar and value
+- Degrees or radians, with radians shown as fractions of π where they land on one
+- The same angle on unrolled sine and cosine waves, which can be dragged too
+- Live code turning a radius and angle into x and y with `Math.cos` and `Math.sin`
+- Four common traps: `Math.sin(90)` returning 0.894 because it takes radians, tan blowing up near 90°, `Math.cos(Math.PI / 2)` returning about 6e-17 instead of 0, and screen y pointing down
+
 ## Running locally
 
 Open `index.html` in a browser. That is the whole setup.
 
-One caveat: the landing page links to `./bitwise/`, `./sorting/`, `./skyhop/`, `./float/` and `./sound/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
+One caveat: the landing page links to `./bitwise/`, `./sorting/`, `./skyhop/`, `./float/`, `./sound/` and `./trig/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
 
 ```bash
 python3 -m http.server 8000
@@ -123,6 +134,8 @@ No Actions workflow and no `.nojekyll` file are needed. Jekyll passes plain HTML
 ├── float/
 │   └── index.html
 ├── sound/
+│   └── index.html
+├── trig/
 │   └── index.html
 └── README.md
 ```
