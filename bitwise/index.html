@@ -6,6 +6,17 @@
     <title>
       Bits &amp; Boolean Lab — ASCII bit toggler + De Morgan visualizer
     </title>
+    <script>
+      if (matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.dataset.theme = "dark";
+        addEventListener("beforeprint", function () {
+          delete document.documentElement.dataset.theme;
+        });
+        addEventListener("afterprint", function () {
+          document.documentElement.dataset.theme = "dark";
+        });
+      }
+    </script>
     <style>
       :root {
         --artifact-background: #ffffff;
@@ -31,6 +42,7 @@
         --artifact-venn-stroke: #8d95a3;
       }
       html[data-theme="dark"] {
+        color-scheme: dark;
         --artifact-background: #0a0b0e;
         --artifact-background-light: #121419;
         --artifact-background-mid: #181b22;

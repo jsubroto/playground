@@ -133,7 +133,7 @@ Each tool lives in its own folder named `index.html` so the URLs stay clean: `/b
 
 Every page is one file containing a single `<style>` block and a single `<script>` block. The point is that any page can be copied, shared or opened offline years from now without a toolchain to resurrect.
 
-- Colours are defined as `--artifact-*` CSS variables with light and dark values, and elements only reference the variables
+- Colours are defined as `--artifact-*` CSS variables with light and dark values, and elements only reference the variables. A short script in each page's `<head>` switches to the dark values when the system is in dark mode, and back to light for printing
 - No external requests at all: no CDN, no web fonts, no images. Typography uses a system font stack
 - Every page carries a print stylesheet, so browser print produces a usable PDF
 - Tool pages link back to the landing page with a relative `../`, which keeps working if the repo is renamed
@@ -143,7 +143,7 @@ Skyhop is the exception. As a full screen game it uses its own fixed palette, wi
 ## Adding a tool
 
 1. Create a folder named for the topic, keeping it short: `regex`, not `regex-visualizer`
-2. Write `index.html` inside it, copying the token block and print styles from an existing tool
+2. Write `index.html` inside it, copying the theme script, token block and print styles from an existing tool
 3. Add a card to the root `index.html`
 4. Keep it self-contained
 
