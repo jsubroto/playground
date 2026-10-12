@@ -43,18 +43,29 @@ Bubble, insertion, selection, merge and quicksort.
 
 The counters make the tradeoffs concrete. At n=40, bubble sort drops to 39 comparisons on sorted input because of its early exit, selection sort always does exactly 780 regardless of input, merge sort does a constant 216 writes, and quicksort goes from about 174 comparisons on random input to about 596 on sorted input as its last element pivot degrades.
 
+### Skyhop (`skyhop/`)
+
+A 3D platformer in a single HTML file. Hop across a floating path, collect gems, reach the flag.
+
+- WASD or arrow keys to move, relative to the camera
+- Space to jump, and press it again in the air for a double jump
+- Q and E or mouse drag to rotate the camera
+- R to return to the last checkpoint, M to mute
+
+One level of about 20 platforms, including a sliding platform, an elevator and a narrow beam, with 24 gems and 2 checkpoints. Keyboard only, so it loads on phones but can't be played there.
+
 ## Running locally
 
 Open `index.html` in a browser. That is the whole setup.
 
-One caveat: the landing page links to `./bitwise/` and `./sorting/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
+One caveat: the landing page links to `./bitwise/`, `./sorting/` and `./skyhop/`, and directory URLs do not resolve to `index.html` over `file://` in every browser. To click between pages locally, serve the folder instead:
 
 ```bash
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Opening a tool page directly, for example `bitwise/index.html`, works fine over `file://`.
+Opening a tool page directly, for example `bitwise/index.html`, works fine over `file://`. Skyhop is the exception: Chrome blocks ES module imports over `file://`, so serve it instead.
 
 ## Deploying
 
@@ -75,6 +86,10 @@ No Actions workflow and no `.nojekyll` file are needed. Jekyll passes plain HTML
 │   └── index.html
 ├── sorting/
 │   └── index.html
+├── skyhop/
+│   ├── index.html
+│   ├── three.module.min.js   vendored Three.js r186
+│   └── three.core.js         imported by three.module.min.js
 └── README.md
 ```
 
@@ -88,6 +103,8 @@ Every page is one file containing a single `<style>` block and a single `<script
 - No external requests at all: no CDN, no web fonts, no images. Typography uses a system font stack
 - Every page carries a print stylesheet, so browser print produces a usable PDF
 - Tool pages link back to the landing page with a relative `../`, which keeps working if the repo is renamed
+
+Skyhop is the exception. As a full screen game it uses its own fixed palette, with no dark mode and no print stylesheet, and it loads a vendored copy of Three.js r186 (`three.module.min.js` and `three.core.js`) as an ES module, so it's three files rather than one.
 
 ## Adding a tool
 
